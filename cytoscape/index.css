@@ -1,0 +1,20 @@
+#network {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 30px;
+    left: 0px;
+    border: 1px solid lightgray;
+}
+
+#info {
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    border: 1px solid lightgray;
+}
+
+html, body {
+  font: 8pt arial;
+}

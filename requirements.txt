@@ -1,0 +1,14 @@
+Click==7.0
+decorator==4.4.1
+Flask==1.1.1
+Flask-Cors==3.0.8
+isodate==0.6.0
+itsdangerous==1.1.0
+Jinja2==2.10.3
+MarkupSafe==1.1.1
+networkx==2.4
+pyparsing==2.4.3
+rdflib==4.2.2
+six==1.13.0
+SPARQLWrapper==1.8.4
+Werkzeug==0.16.0

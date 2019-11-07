@@ -1,0 +1,179 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8"> 
+<head>
+	<title>Server Network</title>
+
+	<script src="cose demo_files/cytoscape.js"></script>
+	<script src="queries.js"></script>
+	<link href="index.css" rel="stylesheet" type="text/css">
+
+	<script type="text/javascript">
+
+
+    // Called when the Visualization API is loaded.
+	function load_data() {
+	
+		var xhr = new XMLHttpRequest();
+		
+		var url = "http://127.0.0.1:5000/query";
+		
+		params = JSON.stringify({
+    		id: 		id_url,
+    		endpoint:	endpoint,
+    		limit:		limit,
+    		prefixes:	prefixes,
+    		nodes: 		node_query,
+    		links: 		link_query
+    	});
+		
+		xhr.open('POST', url, true);
+		xhr.setRequestHeader('Content-type', 'application/json');
+		
+		xhr.onreadystatechange = function () {
+		    if (xhr.readyState === 4 && xhr.status === 200) {
+		        var res = JSON.parse(xhr.responseText);
+		        console.log(res);
+		        
+		        draw(res.elements);
+		        //	drawWithLabelTexts(res.elements);
+		        show(res.metrics);
+		        
+		    } else {
+		    	console.log("FAIL", xhr);
+		    }
+		};
+		
+		xhr.send(params);
+	}
+	
+	
+	// Start showing cytoscape view
+    function draw(elements) {
+      
+		var cy = cytoscape({
+	        container: document.getElementById('network'),
+	        elements: elements,
+			layout: {
+				name: 'cose',
+				idealEdgeLength: 100,
+				nodeOverlap: 20,
+				refresh: 20,
+				fit: true,
+				padding: 30,
+				randomize: false,
+				componentSpacing: 100,
+				nodeRepulsion: 400000,
+				edgeElasticity: 100,
+				nestingFactor: 5,
+				gravity: 80,
+				numIter: 1000,
+				initialTemp: 200,
+				coolingFactor: 0.95,
+				minTemp: 1.0
+			},
+			style: [
+		        {
+		            selector: 'node',
+		            style: {
+		                "shape": 'ellipse',
+						"height": '16px',
+		      			"width": '16px',
+						"text-valign": "center",
+						"text-halign": "right",
+		                'background-color': '#666',
+						content: ' data(name)'
+		       		}
+		       	},
+		       	{
+    	            selector: 'edge',
+    	            style: {
+    	            	'width': 'data(weight)',
+    	                'line-color': '#999'
+    	            }
+    	        }
+		        ]
+			});
+		};
+	
+	
+	function drawWithLabelTexts(elements) {
+      
+		var cy = cytoscape({
+	        container: document.getElementById('network'),
+	        elements: elements,
+			layout: {
+				name: 'cose',
+				idealEdgeLength: 100,
+				nodeOverlap: 20,
+				refresh: 20,
+				fit: true,
+				padding: 30,
+				randomize: false,
+				componentSpacing: 100,
+				nodeRepulsion: 400000,
+				edgeElasticity: 100,
+				nestingFactor: 5,
+				gravity: 80,
+				numIter: 1000,
+				initialTemp: 200,
+				coolingFactor: 0.95,
+				minTemp: 1.0
+			},
+			style: [
+		        {
+		            selector: 'node',
+		            style: {
+		                "shape": 'ellipse',
+						"height": '16px',
+		      			"width": '16px',
+						"text-valign": "center",
+						"text-halign": "right",
+		                'background-color': '#666',
+						content: ' data(name)'
+		       		}
+		       	},
+		       	{
+    	            selector: 'edge',
+    	            style: {
+    	            	'width': 'data(weight)',
+    	                'line-color': '#999', 
+    	                'curve-style': 'bezier',
+    	                'content': 'data(label)',
+    	        		'target-arrow-shape': 'triangle',
+    	        		'target-arrow-color': '#999',
+    	        		'color': '#555',
+    	        		'font-size': '9',
+    	        		"text-valign": "top",
+    	        		"text-halign": "center",
+    	        		'edge-text-rotation': 'autorotate',
+    	        		"text-background-opacity": 1,
+    	        		"text-background-color": "#FFF",
+    	        		"text-background-shape": "roundrectangle" 
+    	            }
+    	        }
+		        ]
+			});
+		};
+	
+	function show(data) {
+		var st="",
+			elem = document.getElementById('info');
+		for (n in data) {
+			st += n +": "+data[n] + ", ";
+		}
+		elem.innerHTML = st;
+	}
+	</script>
+
+</head>
+
+<body onload="load_data()">
+	<div id="info"></div>
+	<div id="network"></div>
+</body>
+
+</html>
+
+
