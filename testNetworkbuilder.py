@@ -42,6 +42,18 @@ def main(args):
     res = nb.query(q)
     print()
     print(res)
+    
+    q = QueryParams(endpoint = ENDPOINT,
+              prefixes = getprefixes(),
+              nodes = getNodeInfo(),
+              links = getSociolinks(),
+              limit = 20,
+              optimize = 1.5,
+              format = "graphml")
+    LOGGER.info("Test quering graphml")
+    res = nb.query(q)
+    print()
+    print(res)
 
 def testWikidata(args):
     nb = NetworkBuilder()
@@ -50,7 +62,7 @@ def testWikidata(args):
               prefixes = wikiprefixes,
               nodes = wikinodes,
               links = wikilinks,
-              limit = 100,
+              limit = 50,
               optimize = 1.5)
     LOGGER.info("Test quering a sociocentric network")
     res = nb.query(q)
@@ -60,7 +72,7 @@ def testWikidata(args):
 
 
 if __name__ == '__main__':
-    testWikidata(sys.args)
-    # main(sys.argv)
+    testWikidata(sys.argv)
+    main(sys.argv)
     
     

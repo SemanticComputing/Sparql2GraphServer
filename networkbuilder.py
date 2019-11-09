@@ -16,6 +16,8 @@ IDSET   = '<ID_SET>'
 
 
 class NetworkBuilder:
+    CYTOSCAPE = 'cytoscape'
+    GRAPHML = 'graphml'
     
     def query(self, opts):
         if opts.id:
@@ -37,10 +39,17 @@ class NetworkBuilder:
                 if k!='id':
                     G.nodes[n][k] = v
         
-        dct = nx.readwrite.json_graph.cytoscape_data(G) 
-        dct['metrics'] = metrics
         
-        return dct
+        if opts.format == NetworkBuilder.GRAPHML:
+            
+            res = '\n'.join(nx.generate_graphml(G, prettyprint=True))
+            
+        else:
+            
+            res = nx.readwrite.json_graph.cytoscape_data(G) 
+            res['metrics'] = metrics
+            
+        return res
     
     
     def egocentric(self, opts):
@@ -297,13 +306,16 @@ class NetworkBuilder:
     def __init__(self):
         pass
     
-        
+    
     def makeSparqlQuery(self, query, endpoint):
         sparql = SPARQLWrapper(endpoint)
         sparql.setQuery(query)
         sparql.setMethod(POST)
         sparql.setReturnFormat(JSON)
         sparql.addCustomHttpHeader("Authorization", "Basic c2Vjbzpsb2dvczAz")
+        #    'User-Agent': 'OpenAnything/1.0 +http://diveintopython.org/http_web_services/'
+        sparql.addCustomHttpHeader("User-Agent", "OpenAnything/1.0 +http://diveintopython.org/http_web_services/")
+        
         results = sparql.query().convert()
         
         data = []
@@ -326,7 +338,8 @@ class NetworkBuilder:
 
 
 class QueryParams():
-    def __init__(self, endpoint, nodes, links, prefixes=" ", limit=1000, id = None, optimize = 1.0):
+    def __init__(self, endpoint, nodes, links, prefixes=" ", limit=1000, id = None, 
+                 optimize = 1.0, format = NetworkBuilder.CYTOSCAPE):
         self.endpoint = endpoint
         self.prefixes = prefixes
         self.nodes = nodes
@@ -334,4 +347,5 @@ class QueryParams():
         self.limit = int(limit)
         self.id = id 
         self.optimize = float(optimize)
+        self.format = format
         

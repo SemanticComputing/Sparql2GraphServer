@@ -17,11 +17,30 @@ def queryGraph():
     
     try:
         res = nb.query(QueryParams(**data))
-        
+    
     except Exception as e:
         return Response({'error: {}'.format(str(e))}, status=403, mimetype='application/json')
     
     response = jsonify(res)
+    
+    return response
+
+@app.route('/')
+@app.route('/graphml', methods=['GET', 'POST'])
+def queryGraphML():
+    
+    if request.method == "POST":
+        data = request.json
+    else:
+        data = request.args.to_dict(flat=False)
+    
+    try:
+        res = nb.query(QueryParams({**data, **{'format':NetworkBuilder.GRAPHML}}))
+    
+    except Exception as e: #    mimetype='text/xml')
+        return Response({'error: {}'.format(str(e))}, status=403, mimetype='text/xml')
+    
+    response = Response(res, mimetype='text/xml')
     
     return response
 
