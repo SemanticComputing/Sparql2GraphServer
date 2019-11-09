@@ -1,0 +1,61 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8"> 
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="cose demo_files/cytoscape.js"></script>
+	<script src="demo.js"></script>
+	<link href="demo.css" rel="stylesheet" type="text/css"> 
+
+</head>
+
+<!-- <body onload="load_data()"> -->
+<body>
+<div class="split left">
+	<div>Endpoint:<br>
+	<input type="text" id="endpoint" value="https://query.wikidata.org/sparql"></input>
+	<br>ID:<br>
+	<input type="text" id="id" value="http://www.wikidata.org/entity/Q9047"></input>
+	<br>Limit:<br>
+	<input type="text" id="limit" value="100"></input>
+	<br>Optimize:<br>
+	<input type="text" id="optimize" value="1.5"></input>
+	<br>Prefixes:<br>
+	<textarea id="prefixes">
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+	</textarea>
+	<br>Links:<br>
+	<textarea id="links">
+SELECT DISTINCT ?source ?target (?label AS ?name) (1 AS ?weight) WHERE {
+  VALUES ?source { <ID> } 
+  VALUES (?rel ?label) { (wdt:P802 "student") (wdt:P185 "doctoral student") }
+  ?source ?rel ?target
+}	</textarea>
+	<br>
+	Nodes:<br>
+	<textarea id="nodes">
+SELECT DISTINCT ?id (?label AS ?name) ?image WHERE {
+  VALUES ?id { <ID_SET> }
+  ?id rdfs:label ?label .
+  FILTER (LANG(?label) = "en").
+  OPTIONAL { ?id wdt:P18 ?image }
+}
+	</textarea>
+	<br>
+	<button type="button" onclick="update()">Update</button>
+	<br>
+	</div>
+	<div class="split right">
+	<div id="info"></div>
+	<div id="network"></div>
+	</div>
+</body>
+
+</html>
+
+

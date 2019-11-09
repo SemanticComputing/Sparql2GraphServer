@@ -1,0 +1,45 @@
+.split {
+  height: 100%;
+  width: 50%;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  overflow-x: hidden;
+  padding-top: 20px;
+}
+
+/* Control the left side */
+.left {
+  left: 0;
+  background-color: #BBB;
+}
+
+/* Control the right side */
+.right {
+  right: 0;
+  padding-left: 10px;
+}
+
+#network {
+    width: 100%;
+    height: 100%;
+    border: 1px solid lightgray;
+}
+
+#info {
+    width: 100%;
+    border: 1px solid lightgray;
+}
+
+
+textarea {
+	font: 12pt arial;
+    width: 95%;
+    height: 130px;
+}
+
+input {
+	font: 12pt arial;
+    width: 95%;
+    height: 30px;
+}
