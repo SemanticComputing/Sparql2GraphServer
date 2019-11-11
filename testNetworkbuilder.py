@@ -72,7 +72,7 @@ def testWikidata(args):
 
 
 if __name__ == '__main__':
-    testWikidata(sys.argv)
+    main(sys.argv)
     main(sys.argv)
     
     

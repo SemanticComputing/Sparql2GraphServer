@@ -33,6 +33,9 @@ class NetworkBuilder:
         self.__debugGraph(G)
         node_data, metrics = self.getGraphDetails(G, opts)
         
+        print("node_data")
+        print(node_data)
+        
         for ob in node_data:
             n = ob['id']
             for k,v in ob.items():
@@ -131,7 +134,7 @@ class NetworkBuilder:
         
         node_values = manager.dict()
         for n in G.nodes():
-            node_values[n]=manager.dict()
+            node_values[n] = manager.dict()
             node_values[n]['id'] = n
         
         metrics = manager.dict()
@@ -163,7 +166,8 @@ class NetworkBuilder:
         for p in processes:
             p.join()
         
-        
+        print("node_values")
+        print(node_values.items())
         return [dict(v) for _,v in node_values.items()], dict([ (k,v) for k,v in metrics.items() ] )
     
     """
@@ -285,24 +289,29 @@ class NetworkBuilder:
     def __debugGraph(self, G):
         LOGGER.debug('nodes {}'.format(len(G.nodes())))
         LOGGER.debug('edges {}'.format(len(G.edges())))
-        
+    
+    
     def __printGraph(self, G):
         print('nodes',len(G.nodes()))
         print('edges',len(G.edges()))
     
     
-    def __getNodesForPeople(self, query, endpoint, ids, dct, lock):
+    def __getNodesForPeople(self, query, endpoint, ids, node_values, lock):
+        
         q = query.replace("<ID_SET>", ids)
         arr = self.makeSparqlQuery(q, endpoint)
-        
-        lock.acquire()
+
         for ob in arr:
             n = ob['id']
+            nn = node_values[n]
             for k,v in ob.items():
-                if k!='id':
-                    dct[n][k] = v
-        lock.release()
-    
+                nn[k] = v
+            
+            lock.acquire()
+            node_values[n] = nn
+            lock.release()
+            
+        
     def __init__(self):
         pass
     

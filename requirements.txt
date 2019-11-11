@@ -7,7 +7,8 @@ itsdangerous==1.1.0
 Jinja2==2.10.3
 MarkupSafe==1.1.1
 networkx==2.4
-pyparsing==2.4.3
+pkg-resources==0.0.0
+pyparsing==2.4.5
 rdflib==4.2.2
 six==1.13.0
 SPARQLWrapper==1.8.4
