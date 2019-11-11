@@ -35,7 +35,9 @@ def queryGraphML():
         data = request.args.to_dict(flat=False)
     
     try:
-        res = nb.query(QueryParams({**data, **{'format':NetworkBuilder.GRAPHML}}))
+        dct = {**data, **{'format':NetworkBuilder.GRAPHML}}
+        print(dct)
+        res = nb.query(QueryParams(**dct))
     
     except Exception as e: #    mimetype='text/xml')
         return Response({'error: {}'.format(str(e))}, status=403, mimetype='text/xml')

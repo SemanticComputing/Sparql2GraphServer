@@ -31,6 +31,36 @@ function load_data(params) {
 	xhr.send(params);
 }
 
+function load_graphml(params) {
+	
+	var xhr = new XMLHttpRequest();
+	
+	var url = "http://127.0.0.1:5000/graphml";
+	
+	
+	xhr.open('POST', url, true);
+	xhr.setRequestHeader('Content-type', 'application/json');
+	
+	xhr.onreadystatechange = function () {
+	    if (xhr.status === 200) {
+	    	if (xhr.readyState === 4) {
+		        var res = xhr.responseText;
+		        console.log("OK", xhr, res);
+		        
+		        var elem = document.getElementById('network');
+		        res = res.replace(/\</g,"&lt;").replace(/\>/g,"&gt;")
+		        elem.innerHTML = res;
+		        
+	     	}
+	    } else {
+		    show_info({status:"Query failed"});
+	    	console.log("FAIL", xhr);
+	    }
+	};
+	
+	show_info({status: "Performing the query"});
+	xhr.send(params);
+}
 
 // Start showing cytoscape view
 function draw(elements) {
@@ -162,3 +192,14 @@ function update() {
 	load_data(JSON.stringify(params));
 }
 
+function updateGraphml() {
+	var params = {'format': 'graphml'};
+	
+	['endpoint', 'id', 'prefixes', 'nodes', 'links', 'limit', 'optimize'].forEach(function(st) {
+		params[st] = document.getElementById(st).value.trim();
+	});
+	console.log("updateGraphml");
+	console.log(params);
+	
+	load_graphml(JSON.stringify(params));
+}
