@@ -1,10 +1,12 @@
 from app    import app
 from flask  import jsonify, request, Response
 from flask_cors import CORS, cross_origin
+# import  logging
 
 from networkbuilder import *
 nb = NetworkBuilder()
 
+# LOGGER = logging.getLogger(__name__)
 
 @app.route('/')
 @app.route('/query', methods=['GET', 'POST'])
@@ -19,6 +21,7 @@ def queryGraph():
         res = nb.query(QueryParams(**data))
     
     except Exception as e:
+        # LOGGER.info("Error '{}' occured".format(e))
         return Response({'error: {}'.format(str(e))}, status=403, mimetype='application/json')
     
     response = jsonify(res)
@@ -36,7 +39,7 @@ def queryGraphML():
     
     try:
         dct = {**data, **{'format':NetworkBuilder.GRAPHML}}
-        print(dct)
+        LOGGER.debug("{}".format(dct))
         res = nb.query(QueryParams(**dct))
     
     except Exception as e: #    mimetype='text/xml')

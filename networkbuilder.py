@@ -10,8 +10,12 @@ import  networkx as nx
 
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
-
 LOGGER  = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)-8s [%(filename)s: line %(lineno)d]:\t%(message)s',
+                    datefmt='%m-%d %H:%M')
+
+
 IDSET   = '<ID_SET>'
 
 
@@ -234,15 +238,15 @@ class NetworkBuilder:
 
     def pagerankGraph(self, G, dct, alpha=0.85, lock=None):
         ans = nx.pagerank(G, alpha=alpha)
-
         self.__writeProperty(dct, ans.items(), 'pagerank', lock)
         
 
     def distancesGraph(self, G, source, dct, lock=None):
-        ans = nx.shortest_path_length(G, source=source)
-
-        self.__writeProperty(dct, ans.items(), 'distance', lock)
-        
+        if source in G:
+            ans = nx.shortest_path_length(G, source=source)
+            self.__writeProperty(dct, ans.items(), 'distance', lock)
+        else:
+            LOGGER.debug("Source node {} not if graph, check the queries".format(source))
 
     def degreesGraph(self, G, dct, lock=None):
         ans = G.in_degree()
@@ -263,7 +267,10 @@ class NetworkBuilder:
 
 
     def graphMetrics(self, G, metrics, lock=None):
-
+        
+        if len(G.nodes())==0 or len(G.edges)==0:
+            return
+        
         avd = 2*len(G.edges())/len(G.nodes())
 
         #    connected components
@@ -291,8 +298,8 @@ class NetworkBuilder:
 
 
     def __printGraph(self, G):
-        print('nodes',len(G.nodes()))
-        print('edges',len(G.edges()))
+        LOGGER.info('number of nodes: {}'.format(len(G.nodes())))
+        LOGGER.info('number of edges: {}'.format(len(G.edges())))
 
 
     def __getNodesForPeople(self, query, endpoint, ids, dct, lock):
