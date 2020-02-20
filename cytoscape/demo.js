@@ -96,7 +96,7 @@ function draw(elements) {
 					"text-valign": "center",
 					"text-halign": "right",
 	                'background-color': '#666',
-					content: ' data(name)'
+					content: ' data(label)'
 	       		}
 	       	},
 	       	{

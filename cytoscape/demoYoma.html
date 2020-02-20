@@ -1,0 +1,78 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8"> 
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="cose demo_files/cytoscape.js"></script>
+	<script src="demo.js"></script>
+	<link href="demo.css" rel="stylesheet" type="text/css"> 
+
+</head>
+
+<!-- <body onload="load_data()"> -->
+<body>
+<div class="split left">
+	<div>Endpoint:<br>
+	<input type="text" id="endpoint" value="http://ldf.fi/yoma/sparql"></input>
+	<br>ID:<br>
+	<input type="text" id="id" value="http://ldf.fi/yoma/p6251"></input>
+	<br>Limit:<br>
+	<input type="text" id="limit" value="100"></input>
+	<br>Optimize:<br>
+	<input type="text" id="optimize" value="1.5"></input>
+	<br>Prefixes:<br>
+	<textarea id="prefixes">
+PREFIX dct: <http://purl.org/dc/terms/> 
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX geosparql: <http://www.opengis.net/ont/geosparql#>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+PREFIX label: <http://ldf.fi/yoma/label/> 
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+PREFIX rels:  <http://ldf.fi/yoma/relations/> 
+PREFIX spatial: <http://jena.apache.org/spatial#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#> 
+PREFIX schema: <http://schema.org/>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX text: <http://jena.apache.org/text#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX bioc: <http://ldf.fi/schema/bioc/>
+PREFIX : <http://ldf.fi/yoma/schema/>
+	</textarea>
+	<br>Links:<br>
+	<textarea id="links">
+SELECT DISTINCT ?source ?target ?prefLabel (1 as ?weight)
+WHERE {
+	VALUES ?source { <ID> }
+	?source bioc:has_family_relation [ a ?rel ; bioc:inheres_in ?target ] .
+	OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='fi') }
+} 	</textarea>
+	<br>
+	Nodes:<br>
+	<textarea id="nodes">
+SELECT DISTINCT ?id (?prefLabel AS ?name) ?gender ?color ?size 
+WHERE {
+	VALUES (?class ?color ?size) { (:Person "red" "16px") (:ReferencedPerson "blue" "12px") }
+	VALUES ?id { <ID_SET> }
+	?id a ?class ;
+		skos:prefLabel ?prefLabel .
+	OPTIONAL { ?id schema:gender/skos:prefLabel ?gender . FILTER(lang(?gender)="fi") }
+}	</textarea>
+	<br>
+	<button type="button" onclick="update()">Update</button>
+	<button type="button" onclick="updateGraphml()">Graphml</button>
+	<br>
+	</div>
+	<div class="split right">
+	<div id="info"></div>
+	<div id="network"></div>
+	</div>
+</body>
+
+</html>
+
+

@@ -37,12 +37,20 @@ class NetworkBuilder:
         self.__debugGraph(G)
         node_data, metrics = self.getGraphDetails(G, opts)
 
-        for ob in node_data:
-            n = ob['id']
-            for k,v in ob.items():
-                if k!='id':
-                    G.nodes[n][k] = v
-
+        #   if optimize>1, removed nodes causing trouble
+        try:
+            for ob in node_data:
+                n = ob.get('id')
+                if n:
+                    for k,v in ob.items():
+                        if k!='id':
+                            G.nodes[n][k] = v
+                else:
+                    LOGGER.debug("No 'id' found for {}".format(ob))
+        except Exception as e:
+            LOGGER.error("{} occured".format(e))
+            LOGGER.error("{}".format(node_data))
+            raise e
         
         if opts.format == NetworkBuilder.GRAPHML:
 
@@ -74,7 +82,7 @@ class NetworkBuilder:
 
             if len(nodes)>=limit or len(nodes)==n0:
                 break
-
+        
         return nodes, links
 
 
