@@ -29,7 +29,7 @@ class NetworkBuilder:
         else:
             nodes, links = self.sociocentric(opts)
 
-        G = self.generateGraph([{'id': n} for n in nodes], links)
+        G = self.generateGraph([{'id': n} for n in nodes], links, opts)
 
         self.__debugGraph(G)
         self.densifyGraph(G, opts.limit)
@@ -97,6 +97,7 @@ class NetworkBuilder:
         if len(links)<1:
             LOGGER.debug("No links found")
             return
+        
         LOGGER.debug("{} links found".format(len(links)))
 
         nodes = self.__uniqueNodesFromLinks(links)
@@ -105,7 +106,7 @@ class NetworkBuilder:
 
 
 
-    def generateGraph(self, nodes, links):
+    def generateGraph(self, nodes, links, opts):
 
         G = nx.DiGraph()
 
@@ -124,9 +125,13 @@ class NetworkBuilder:
         #    e.g. queried parameters in SELECT ?x ?y ...:
         edge_keys = set([key for ob in links for key in ob.keys()]) - set(['source', 'target'])
 
+
         for ob in links:
             src = ob['source']
             trg = ob['target']
+            if G.has_edge(trg, src) and opts.removeMultipleLinks:
+                continue
+            
             G.add_edge(src, trg)
             for key in edge_keys:
                 if key in ob:
@@ -361,8 +366,13 @@ class NetworkBuilder:
 
 
 class QueryParams():
-    def __init__(self, endpoint, nodes, links, prefixes=" ", limit=1000, id = None,
-                 optimize = 1.0, format = NetworkBuilder.CYTOSCAPE):
+    def __init__(self, endpoint, nodes, links, 
+                prefixes=' ', 
+                limit=1000, 
+                id = None,
+                optimize = 1.0, 
+                format = NetworkBuilder.CYTOSCAPE, 
+                removeMultipleLinks = True):
         self.endpoint = endpoint
         self.prefixes = prefixes
         self.nodes = nodes
@@ -371,3 +381,4 @@ class QueryParams():
         self.id = id
         self.optimize = float(optimize)
         self.format = format
+        self.removeMultipleLinks = removeMultipleLinks

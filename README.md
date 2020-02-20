@@ -18,7 +18,7 @@ Required POST (or GET) query parameters:
 | limit | Limit the number of links | optional, default 1000 |
 | format | Output format: 'cytoscape' or 'graphml' | default 'cytoscape'|
 | optimize | First performs a query with optimize*limit results, and then densifies the network. | optional, default 1.0 |
-
+| removeMultipleLinks | show only one link between nodes | optional, default True |
 Returns JSON with fields *elements* for input to cytoscape.js, and *metrics* currently containing network metrics of average degree, diameter, and number of connected components.
 
 Simple HTML demo with plain javascript in folder *cytoscape*.
