@@ -16,12 +16,12 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%m-%d %H:%M')
 
 
-IDSET   = '<ID_SET>'
+IDSET = '<ID_SET>'
 
 
 class NetworkBuilder:
-    CYTOSCAPE = 'cytoscape'
-    GRAPHML = 'graphml'
+    CYTOSCAPE   = 'cytoscape'
+    GRAPHML     = 'graphml'
 
     def query(self, opts):
         if opts.id:
@@ -256,7 +256,7 @@ class NetworkBuilder:
 
     def distancesGraph(self, G, source, dct, lock=None):
         if source in G:
-            ans = nx.shortest_path_length(G, source=source)
+            ans = nx.shortest_path_length(G.to_undirected(), source=source)
             self.__writeProperty(dct, ans.items(), 'distance', lock)
         else:
             LOGGER.debug("Source node {} not if graph, check the queries".format(source))
