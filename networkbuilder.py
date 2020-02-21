@@ -83,6 +83,9 @@ class NetworkBuilder:
             if len(nodes)>=limit or len(nodes)==n0:
                 break
         
+        if len(nodes)==0:
+            nodes = [opts.id]
+        
         return nodes, links
 
 
