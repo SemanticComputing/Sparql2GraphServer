@@ -1,5 +1,5 @@
 '''
-Created on 5.4.2019, modified 6.11.2019
+Created on 5.4.2019, modified 4.3.2020
 # coding: utf-8
 @author: petrileskinen
 '''
@@ -24,9 +24,12 @@ class NetworkBuilder:
     GRAPHML     = 'graphml'
 
     def query(self, opts):
+
         if opts.id:
+            #   if opts.id is provided, query a egocentric network
             nodes, links = self.egocentric(opts)
         else:
+            #   otherwise a sampled network
             nodes, links = self.sociocentric(opts)
 
         G = self.generateGraph([{'id': n} for n in nodes], links, opts)
@@ -74,7 +77,7 @@ class NetworkBuilder:
             node_list = ' '.join(["<{}>".format(n) for n in nodes])
             query = opts.links.replace('<ID>', node_list)
 
-            links = self.makeSparqlQuery(opts.prefixes+query, opts.endpoint)
+            links = self.makeSparqlQuery(opts.prefixes+' '+query, opts.endpoint, opts.customHttpHeaders)
 
             n0 = len(nodes)
             nodes = self.__uniqueNodesFromLinks(links)
@@ -83,6 +86,7 @@ class NetworkBuilder:
             if len(nodes)>=limit or len(nodes)==n0:
                 break
         
+        #   no resulting links, show the center node itself
         if len(nodes)==0:
             nodes = [opts.id]
         
@@ -93,9 +97,9 @@ class NetworkBuilder:
     def sociocentric(self, opts):
 
         limit = int(opts.optimize*opts.limit)
-        query = opts.prefixes + opts.links + " LIMIT {}".format(limit)
+        query = opts.prefixes +' '+ opts.links + " LIMIT {}".format(limit)
 
-        links = self.makeSparqlQuery(query, opts.endpoint)
+        links = self.makeSparqlQuery(query, opts.endpoint, opts.customHttpHeaders)
 
         if len(links)<1:
             LOGGER.debug("No links found")
@@ -160,7 +164,8 @@ class NetworkBuilder:
         processes = [
             multiprocessing.Process(target=self.__getNodesForPeople,
                                      args=(opts.prefixes+opts.nodes,
-                                           opts.endpoint, ids, node_values, lock)),
+                                           opts.endpoint, ids, node_values, 
+                                           opts.customHttpHeaders, lock)),
             multiprocessing.Process(target=self.pagerankGraph,
                                      args=(G, node_values, 0.85, lock)),
             multiprocessing.Process(target=self.degreesGraph,
@@ -185,13 +190,7 @@ class NetworkBuilder:
         
         return [dict(v) for _,v in node_values.items()], dict([ (k,v) for k,v in metrics.items() ] )
 
-    """
-    def createGraph(self, nodes, links):
-        G = nx.DiGraph()
-        G.add_nodes_from(nodes)
-        G.add_edges_from(links)
-        return G
-    """
+    
 
     def densifyGraph(self, G, limit):
 
@@ -222,6 +221,7 @@ class NetworkBuilder:
             # self.printGraph(G)
 
 
+    #   return an unique set of nodes as sources and targets of the links
     def __uniqueNodesFromLinks(self, links):
         return set([n['source'] for n in links]) | set([n['target'] for n in links])
 
@@ -318,10 +318,10 @@ class NetworkBuilder:
         LOGGER.info('number of edges: {}'.format(len(G.edges())))
 
 
-    def __getNodesForPeople(self, query, endpoint, ids, dct, lock):
+    def __getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
 
         q = query.replace("<ID_SET>", ids)
-        arr = self.makeSparqlQuery(q, endpoint)
+        arr = self.makeSparqlQuery(q, endpoint, customHttpHeaders)
 
         for ob in arr:
             n = ob['id']
@@ -338,17 +338,21 @@ class NetworkBuilder:
         pass
 
 
-    def makeSparqlQuery(self, query, endpoint):
+    def makeSparqlQuery(self, query, endpoint, customHttpHeaders=None):
         sparql = SPARQLWrapper(endpoint)
         sparql.setQuery(query)
         sparql.setMethod(POST)
         sparql.setReturnFormat(JSON)
-        sparql.addCustomHttpHeader("Authorization", "Basic c2Vjbzpsb2dvczAz")
-        #    'User-Agent': 'OpenAnything/1.0 +http://diveintopython.org/http_web_services/'
-        sparql.addCustomHttpHeader("User-Agent", "OpenAnything/1.0 +http://diveintopython.org/http_web_services/")
 
-        results = sparql.query().convert()
-
+        if customHttpHeaders:
+            for k,v in customHttpHeaders.items():
+                sparql.addCustomHttpHeader(k,v)
+        
+        try:
+            results = sparql.query().convert()
+        except Exception as e:
+            raise e
+        
         data = []
         for result in results["results"]["bindings"]:
             ob = {}
@@ -375,7 +379,8 @@ class QueryParams():
                 id = None,
                 optimize = 1.0, 
                 format = NetworkBuilder.CYTOSCAPE, 
-                removeMultipleLinks = True):
+                removeMultipleLinks = True,
+                customHttpHeaders = None):
         self.endpoint = endpoint
         self.prefixes = prefixes
         self.nodes = nodes
@@ -385,3 +390,5 @@ class QueryParams():
         self.optimize = float(optimize)
         self.format = format
         self.removeMultipleLinks = removeMultipleLinks
+        self.customHttpHeaders = customHttpHeaders
+        

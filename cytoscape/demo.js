@@ -180,9 +180,14 @@ function show_info(data) {
 	elem.innerHTML = st;
 }
 
-function update() {
-	var params = {};
-	
+function update() { 
+	var params = {customHttpHeaders: {
+									"Authorization": "Basic c2Vjbzpsb2dvczAz",
+									"User-Agent": "OpenAnything/1.0 +http://diveintopython.org/http_web_services/"} 
+									};
+	/**customHttpHeaders
+		sparql.addCustomHttpHeader("Authorization", "Basic c2Vjbzpsb2dvczAz") */
+		
 	['endpoint', 'id', 'prefixes', 'nodes', 'links', 'limit', 'optimize'].forEach(function(st) {
 		params[st] = document.getElementById(st).value.trim();
 	});
