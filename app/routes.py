@@ -1,12 +1,9 @@
 from app    import app
 from flask  import jsonify, request, Response
 from flask_cors import CORS, cross_origin
-# import  logging
 
 from networkbuilder import *
 nb = NetworkBuilder()
-
-# LOGGER = logging.getLogger(__name__)
 
 @app.route('/')
 @app.route('/query', methods=['GET', 'POST'])

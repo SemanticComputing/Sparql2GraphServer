@@ -66,10 +66,14 @@ class NetworkBuilder:
 
         return res
 
-
+    """
+    Find the network by sequential BFSearches
+    """
     def egocentric(self, opts):
 
+        #   start node
         nodes = [opts.id]
+
         limit = int(opts.optimize*opts.limit)
         LOGGER.debug("Limit set to {}".format(limit))
 
@@ -79,6 +83,7 @@ class NetworkBuilder:
 
             links = self.makeSparqlQuery(opts.prefixes+' '+query, opts.endpoint, opts.customHttpHeaders)
 
+            #   grow source nodes with the previous result
             n0 = len(nodes)
             nodes = self.__uniqueNodesFromLinks(links)
             LOGGER.debug('depth: {}, nodes {}'.format(i+1, len(nodes)))
@@ -97,19 +102,17 @@ class NetworkBuilder:
     def sociocentric(self, opts):
 
         limit = int(opts.optimize*opts.limit)
-        query = opts.prefixes +' '+ opts.links + " LIMIT {}".format(limit)
-
+        # query = opts.prefixes +' '+ opts.links + " LIMIT {}".format(limit)
+        query = "{} {} LIMIT {}".format(opts.prefixes, opts.links, limit)
         links = self.makeSparqlQuery(query, opts.endpoint, opts.customHttpHeaders)
 
         if len(links)<1:
             LOGGER.debug("No links found")
-            return
+            return [], []
         
         LOGGER.debug("{} links found".format(len(links)))
 
-        nodes = self.__uniqueNodesFromLinks(links)
-
-        return nodes, links
+        return self.__uniqueNodesFromLinks(links), links
 
 
 
@@ -221,37 +224,12 @@ class NetworkBuilder:
             # self.printGraph(G)
 
 
-    #   return an unique set of nodes as sources and targets of the links
+    #   return an unique set of nodes as sources and targets of links
     def __uniqueNodesFromLinks(self, links):
         return set([n['source'] for n in links]) | set([n['target'] for n in links])
 
 
-    """
-    def __getNodeInfo(self, nodes, opts, N=2500):
-        if len(nodes)>N:
-            return self.__getNodeInfo(list(nodes)[:N], opts) + self.__getNodeInfo(list(nodes)[N:], opts)
-
-        node_ids    = ' '.join(["<{}>".format(n) for n in nodes])
-        node_query  = opts.nodes.replace(IDSET, node_ids)
-
-        nodes = self.makeSparqlQuery(opts.prefixes+node_query, opts.endpoint)
-        LOGGER.debug("{} nodes queried".format(len(nodes)))
-        return nodes
-
-    def layoutGraph(self, G, dct, iterations=500, lock=None):
-
-        ans = nx.kamada_kawai_layout(G)
-
-        scale = 80*(G.number_of_nodes()**0.6)
-        lock.acquire()
-
-        for k,[x,y] in ans.items():
-            dct[k]['x'] = scale*x
-            dct[k]['y'] = scale*y
-        lock.release()
-        # print("Layout process ready")
-    """
-
+    
     def pagerankGraph(self, G, dct, alpha=0.85, lock=None):
         ans = nx.pagerank(G, alpha=alpha)
         self.__writeProperty(dct, ans.items(), 'pagerank', lock)
@@ -311,11 +289,6 @@ class NetworkBuilder:
     def __debugGraph(self, G):
         LOGGER.debug('nodes {}'.format(len(G.nodes())))
         LOGGER.debug('edges {}'.format(len(G.edges())))
-
-
-    def __printGraph(self, G):
-        LOGGER.info('number of nodes: {}'.format(len(G.nodes())))
-        LOGGER.info('number of edges: {}'.format(len(G.edges())))
 
 
     def __getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
