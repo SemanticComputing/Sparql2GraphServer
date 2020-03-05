@@ -20,6 +20,7 @@ Required POST (or GET) query parameters:
 | optimize | First performs a query with optimize*limit results, and then densifies the network. | optional, default 1.0 |
 | removeMultipleLinks | show only one link between nodes | optional, default True |
 | customHttpHeaders | Headers, e.g. 'Authorization', of the query | optional, default None |
+
 Returns JSON with fields *elements* for input to cytoscape.js, and *metrics* currently containing network metrics of average degree, diameter, and number of connected components.
 
 Simple HTML demo with plain javascript in folder *cytoscape*.
