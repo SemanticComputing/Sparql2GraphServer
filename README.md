@@ -25,5 +25,15 @@ Returns JSON with fields *elements* for input to cytoscape.js, and *metrics* cur
 
 Simple HTML demo with plain javascript in folder *cytoscape*.
 
-Python 3.6.8 
+Python 3.6.8
 requirements.txt
+
+## Docker
+
+Build:
+
+`docker build -t sparql2graphserver .`
+
+Run:
+
+`docker run -it --rm -p 5000:5000 sparql2graphserver`

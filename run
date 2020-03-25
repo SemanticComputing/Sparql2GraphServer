@@ -1,0 +1,3 @@
+#!/bin/sh
+
+/usr/bin/gunicorn $GUNICORN_RELOAD -w $GUNICORN_WORKER_AMOUNT -t $GUNICORN_TIMEOUT -b 0.0.0.0:5000 app.routes:app
