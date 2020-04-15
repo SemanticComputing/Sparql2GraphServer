@@ -22,6 +22,9 @@
 	<input type="text" id="limit" value="100"></input>
 	<br>Optimize:<br>
 	<input type="text" id="optimize" value="1.5"></input>
+    <br>
+    <button type="button" onclick="update()">Update</button>
+    <button type="button" onclick="updateGraphml()">Graphml</button>
 	<br>Prefixes:<br>
 	<textarea id="prefixes">
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -36,8 +39,8 @@ SELECT DISTINCT ?source ?target (?label AS ?name) (1 AS ?weight) WHERE {
   VALUES (?rel ?label) { (wdt:P802 "student") (wdt:P185 "doctoral student") }
   ?source ?rel ?target
 }	</textarea>
-	<br>
-	Nodes:<br>
+    <br>
+    Nodes:<br>
 	<textarea id="nodes">
 SELECT DISTINCT ?id (?label AS ?name) ?image WHERE {
   VALUES ?id { <ID_SET> }
@@ -46,10 +49,7 @@ SELECT DISTINCT ?id (?label AS ?name) ?image WHERE {
   OPTIONAL { ?id wdt:P18 ?image }
 }
 	</textarea>
-	<br>
-	<button type="button" onclick="update()">Update</button>
-	<button type="button" onclick="updateGraphml()">Graphml</button>
-	<br>
+	
 	</div>
 	<div class="split right">
 	<div id="info"></div>
