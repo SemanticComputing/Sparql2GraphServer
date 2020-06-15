@@ -15,7 +15,6 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)-8s [%(filename)s: line %(lineno)d]:\t%(message)s',
                     datefmt='%m-%d %H:%M')
 
-
 IDSET = '<ID_SET>'
 
 
@@ -54,7 +53,7 @@ class NetworkBuilder:
             LOGGER.error("{} occured".format(e))
             LOGGER.error("{}".format(node_data))
             raise e
-        
+
         if opts.format == NetworkBuilder.GRAPHML:
 
             res = '\n'.join(nx.generate_graphml(G, prettyprint=True))
@@ -72,7 +71,7 @@ class NetworkBuilder:
     def egocentric(self, opts):
 
         #   start node
-        nodes = [opts.id]
+        nodes = opts.id.split(' ')
 
         limit = int(opts.optimize*opts.limit)
         LOGGER.debug("Limit set to {}".format(limit))
@@ -90,11 +89,11 @@ class NetworkBuilder:
 
             if len(nodes)>=limit or len(nodes)==n0:
                 break
-        
+
         #   no resulting links, show the center node itself
         if len(nodes)==0:
             nodes = [opts.id]
-        
+
         return nodes, links
 
 
@@ -109,7 +108,7 @@ class NetworkBuilder:
         if len(links)<1:
             LOGGER.debug("No links found")
             return [], []
-        
+
         LOGGER.debug("{} links found".format(len(links)))
 
         return self.__uniqueNodesFromLinks(links), links
@@ -141,7 +140,7 @@ class NetworkBuilder:
             trg = ob['target']
             if G.has_edge(trg, src) and opts.removeMultipleLinks:
                 continue
-            
+
             G.add_edge(src, trg)
             for key in edge_keys:
                 if key in ob:
@@ -167,7 +166,7 @@ class NetworkBuilder:
         processes = [
             multiprocessing.Process(target=self.__getNodesForPeople,
                                      args=(opts.prefixes+opts.nodes,
-                                           opts.endpoint, ids, node_values, 
+                                           opts.endpoint, ids, node_values,
                                            opts.customHttpHeaders, lock)),
             multiprocessing.Process(target=self.pagerankGraph,
                                      args=(G, node_values, 0.85, lock)),
@@ -190,10 +189,10 @@ class NetworkBuilder:
 
         for p in processes:
             p.join()
-        
+
         return [dict(v) for _,v in node_values.items()], dict([ (k,v) for k,v in metrics.items() ] )
 
-    
+
 
     def densifyGraph(self, G, limit):
 
@@ -229,11 +228,11 @@ class NetworkBuilder:
         return set([n['source'] for n in links]) | set([n['target'] for n in links])
 
 
-    
+
     def pagerankGraph(self, G, dct, alpha=0.85, lock=None):
         ans = nx.pagerank(G, alpha=alpha)
         self.__writeProperty(dct, ans.items(), 'pagerank', lock)
-        
+
 
     def distancesGraph(self, G, source, dct, lock=None):
         if source in G:
@@ -261,10 +260,10 @@ class NetworkBuilder:
 
 
     def graphMetrics(self, G, metrics, lock=None):
-        
+
         if len(G.nodes())==0 or len(G.edges)==0:
             return
-        
+
         avd = 2*len(G.edges())/len(G.nodes())
 
         #    connected components
@@ -294,6 +293,8 @@ class NetworkBuilder:
     def __getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
 
         q = query.replace("<ID_SET>", ids)
+        LOGGER.debug(q)
+
         arr = self.makeSparqlQuery(q, endpoint, customHttpHeaders)
 
         for ob in arr:
@@ -320,12 +321,12 @@ class NetworkBuilder:
         if customHttpHeaders:
             for k,v in customHttpHeaders.items():
                 sparql.addCustomHttpHeader(k,v)
-        
+
         try:
             results = sparql.query().convert()
         except Exception as e:
             raise e
-        
+
         data = []
         for result in results["results"]["bindings"]:
             ob = {}
@@ -346,12 +347,12 @@ class NetworkBuilder:
 
 
 class QueryParams():
-    def __init__(self, endpoint, nodes, links, 
-                prefixes=' ', 
-                limit=1000, 
+    def __init__(self, endpoint, nodes, links,
+                prefixes=' ',
+                limit=1000,
                 id = None,
-                optimize = 1.0, 
-                format = NetworkBuilder.CYTOSCAPE, 
+                optimize = 1.0,
+                format = NetworkBuilder.CYTOSCAPE,
                 removeMultipleLinks = True,
                 customHttpHeaders = None):
         self.endpoint = endpoint
@@ -364,4 +365,3 @@ class QueryParams():
         self.format = format
         self.removeMultipleLinks = removeMultipleLinks
         self.customHttpHeaders = customHttpHeaders
-        
