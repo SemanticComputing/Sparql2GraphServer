@@ -1,70 +1,70 @@
-
-
+var GRAPH_SERVER = 'http://127.0.0.1:5000';
+// or https://sparql-network.demo.seco.cs.aalto.fi
 
 function load_data(params) {
-	
+
 	var xhr = new XMLHttpRequest();
-	
-	var url = "http://127.0.0.1:5000/query";
-	
-	
+
+	var url = GRAPH_SERVER+"/query";
+
 	xhr.open('POST', url, true);
 	xhr.setRequestHeader('Content-type', 'application/json');
-	
+
 	xhr.onreadystatechange = function () {
 	    if (xhr.status === 200) {
 	    	if (xhr.readyState === 4) {
 		        var res = JSON.parse(xhr.responseText);
 		        console.log("OK", xhr, res);
-		        
+
 		        //	draw(res.elements);
 		        drawWithLabelTexts(res.elements);
 		        show_info(res.metrics);
 	     	}
 	    } else {
 		    show_info({status:"Query failed"});
-	    	console.log("FAIL", xhr);
+			console.log("FAIL", xhr);
+			console.log(params);
 	    }
 	};
-	
+
 	show_info({status: "Performing the query"});
 	xhr.send(params);
 }
 
 function load_graphml(params) {
-	
+
 	var xhr = new XMLHttpRequest();
-	
-	var url = "http://127.0.0.1:5000/graphml";
-	
-	
+
+	var url = GRAPH_SERVER+"/graphml";
+
+
 	xhr.open('POST', url, true);
 	xhr.setRequestHeader('Content-type', 'application/json');
-	
+
 	xhr.onreadystatechange = function () {
 	    if (xhr.status === 200) {
 	    	if (xhr.readyState === 4) {
 		        var res = xhr.responseText;
 		        console.log("OK", xhr, res);
-		        
+
 		        var elem = document.getElementById('network');
 		        res = res.replace(/\</g,"&lt;").replace(/\>/g,"&gt;")
 		        elem.innerHTML = res;
-		        
+
 	     	}
 	    } else {
 		    show_info({status:"Query failed"});
 	    	console.log("FAIL", xhr);
 	    }
 	};
-	
+
 	show_info({status: "Performing the query"});
 	xhr.send(params);
 }
 
 // Start showing cytoscape view
 function draw(elements) {
-  
+
 	var cy = cytoscape({
         container: document.getElementById('network'),
         elements: elements,
@@ -91,19 +91,26 @@ function draw(elements) {
 	            selector: 'node',
 	            style: {
 	                "shape": 'ellipse',
-					"height": '16px',
-	      			"width": '16px',
-					"text-valign": "center",
-					"text-halign": "right",
-	                'background-color': '#666',
-					content: ' data(label)'
+									"height": '16px',
+	      					"width": '16px',
+									"text-valign": "center",
+									"text-halign": "right",
+	                'background-color': 'data(color)',
+									content: ' data(label)'
 	       		}
 	       	},
 	       	{
 	            selector: 'edge',
 	            style: {
 	            	'width': 'data(weight)',
-	                'line-color': '#999'
+	              'line-color': '#999',
+		            content: ' data(name) ',
+		            'target-arrow-shape': 'triangle',
+		            'target-arrow-color': '#999',
+		            color: '#555',
+		            'font-size': '6',
+		            'text-valign': 'top',
+		            'text-halign': 'center'
 	            }
 	        }
 	        ]
@@ -112,19 +119,19 @@ function draw(elements) {
 
 
 function drawWithLabelTexts(elements) {
-  
+
 	var cy = cytoscape({
         container: document.getElementById('network'),
         elements: elements,
 		layout: {
 			name: 'cose',
-			idealEdgeLength: 100,
+			idealEdgeLength: 150,
 			nodeOverlap: 20,
 			refresh: 20,
 			fit: true,
 			padding: 30,
 			randomize: false,
-			componentSpacing: 100,
+			componentSpacing: 150,
 			nodeRepulsion: 400000,
 			edgeElasticity: 100,
 			nestingFactor: 5,
@@ -137,23 +144,23 @@ function drawWithLabelTexts(elements) {
 		style: [
 	        {
 	            selector: 'node',
-	            style: {
+							style: {
 	                "shape": 'ellipse',
-					"height": '16px',
-	      			"width": '16px',
-					"text-valign": "center",
-					"text-halign": "right",
-	                'background-color': '#666',
-					content: ' data(name)'
+							"height": ele => ele.data('size') || 12,
+	      					"width": ele => ele.data('size') || 12,
+							"text-valign": "center",
+							"text-halign": "right",
+	                		'background-color': ele => ele.data('color') || "#555",
+							content: ele => " "+ ele.data('name') || ""
 	       		}
 	       	},
 	       	{
 	            selector: 'edge',
 	            style: {
-	            	'width': 'data(weight)',
-	                'line-color': '#999', 
+	            	'width': ele => ele.data('weight') || 1,
+	                'line-color': '#999',
 	                'curve-style': 'bezier',
-	                'content': 'data(label)',
+	                'content': ele => ele.data('name') || "",
 	        		'target-arrow-shape': 'triangle',
 	        		'target-arrow-color': '#999',
 	        		'color': '#555',
@@ -163,7 +170,7 @@ function drawWithLabelTexts(elements) {
 	        		'edge-text-rotation': 'autorotate',
 	        		"text-background-opacity": 1,
 	        		"text-background-color": "#FFF",
-	        		"text-background-shape": "roundrectangle" 
+	        		"text-background-shape": "roundrectangle"
 	            }
 	        }
 	        ]
@@ -180,31 +187,40 @@ function show_info(data) {
 	elem.innerHTML = st;
 }
 
-function update() { 
+function update() {
+	console.log('Updating')
 	var params = {customHttpHeaders: {
-									"Authorization": "Basic c2Vjbzpsb2dvczAz",
-									"User-Agent": "OpenAnything/1.0 +http://diveintopython.org/http_web_services/"} 
+									//	for wikidata queries:
+									"User-Agent": "OpenAnything/1.0 +http://diveintopython.org/http_web_services/"}
 									};
-	/**customHttpHeaders
-		sparql.addCustomHttpHeader("Authorization", "Basic c2Vjbzpsb2dvczAz") */
-		
+								
+	var srv = document.getElementById("server");
+	if (srv && srv.value) {
+		GRAPH_SERVER = srv.value;
+	}
+	
+	var auth = document.getElementById("Authorization");
+	if (auth && auth.value) {
+		params.customHttpHeaders.Authorization = auth.value.trim();
+	}
+	
 	['endpoint', 'id', 'prefixes', 'nodes', 'links', 'limit', 'optimize'].forEach(function(st) {
 		params[st] = document.getElementById(st).value.trim();
 	});
-	
+
 	console.log(params);
-	
+
 	load_data(JSON.stringify(params));
 }
 
 function updateGraphml() {
 	var params = {'format': 'graphml'};
-	
+
 	['endpoint', 'id', 'prefixes', 'nodes', 'links', 'limit', 'optimize'].forEach(function(st) {
 		params[st] = document.getElementById(st).value.trim();
 	});
 	console.log("updateGraphml");
 	console.log(params);
-	
+
 	load_graphml(JSON.stringify(params));
 }
