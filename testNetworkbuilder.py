@@ -1,6 +1,5 @@
 '''
 Created on 6 Nov 2019
-
 @author: petrileskinen
 '''
 
@@ -8,6 +7,7 @@ import logging
 import sys
 from networkbuilder import *
 from testQueries import *
+from authorization import AUTHORIZATION_HEADER
 
 ENDPOINT = "https://ldf.fi/yoma/sparql"
 NBFENDPOINT = "http://ldf.fi/nbf/sparql"
@@ -19,6 +19,7 @@ logging.basicConfig(level='DEBUG',
 
 
 def main(args):
+    
     nb = NetworkBuilder()
     
     q = QueryParams(endpoint = ENDPOINT,
@@ -27,7 +28,8 @@ def main(args):
               links = getRelativeLinks(),
               limit = 100,
               optimize = 1.5,
-              id = "http://ldf.fi/yoma/p660")
+              customHttpHeaders = AUTHORIZATION_HEADER,
+              id = "http://ldf.fi/yoma/people/p660")
     LOGGER.info("Test quering an egocentric network")
     _ = nb.query(q)
     
@@ -37,6 +39,7 @@ def main(args):
               nodes = getNodeInfo(),
               links = getSociolinks(),
               limit = 100,
+              customHttpHeaders = AUTHORIZATION_HEADER,
               optimize = 2.5)
     LOGGER.info("Test quering a sociocentric network")
     res = nb.query(q)
@@ -48,6 +51,7 @@ def main(args):
               nodes = getNodeInfo(),
               links = getSociolinks(),
               limit = 20,
+              customHttpHeaders = AUTHORIZATION_HEADER,
               optimize = 1.5,
               format = "graphml")
     LOGGER.info("Test quering graphml")
@@ -70,9 +74,7 @@ def testWikidata(args):
     print(res)
 
 
-
 if __name__ == '__main__':
-    main(sys.argv)
     main(sys.argv)
     
     

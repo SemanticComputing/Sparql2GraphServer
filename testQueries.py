@@ -31,7 +31,7 @@ PREFIX rels:  <http://ldf.fi/yoma/relations/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#> 
 PREFIX schema: <http://schema.org/>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
-PREFIX : <http://ldf.fi/yoma/>
+PREFIX : <http://ldf.fi/schema/yoma/>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX ammo: <http://ldf.fi/ammo/> """
 

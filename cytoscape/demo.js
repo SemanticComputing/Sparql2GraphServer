@@ -214,12 +214,26 @@ function update() {
 }
 
 function updateGraphml() {
-	var params = {'format': 'graphml'};
-
+	console.log('Loading Graphml')
+	var params = {customHttpHeaders: {
+									//	for wikidata queries:
+									"User-Agent": "OpenAnything/1.0 +http://diveintopython.org/http_web_services/"}
+									};
+								
+	var srv = document.getElementById("server");
+	if (srv && srv.value) {
+		GRAPH_SERVER = srv.value;
+	}
+	
+	var auth = document.getElementById("Authorization");
+	if (auth && auth.value) {
+		params.customHttpHeaders.Authorization = auth.value.trim();
+	}
+	
 	['endpoint', 'id', 'prefixes', 'nodes', 'links', 'limit', 'optimize'].forEach(function(st) {
 		params[st] = document.getElementById(st).value.trim();
 	});
-	console.log("updateGraphml");
+
 	console.log(params);
 
 	load_graphml(JSON.stringify(params));
