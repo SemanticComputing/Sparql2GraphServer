@@ -11,7 +11,7 @@ import  networkx as nx
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
 LOGGER  = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.INFO,
                     format='%(levelname)-8s [%(filename)s: line %(lineno)d]:\t%(message)s',
                     datefmt='%m-%d %H:%M')
 
@@ -23,6 +23,8 @@ class NetworkBuilder:
     GRAPHML     = 'graphml'
 
     def query(self, opts):
+        if opts.log_level:
+            LOGGER.setLevel(opts.log_level)
 
         if opts.id:
             #   if opts.id is provided, query a egocentric network
@@ -164,7 +166,7 @@ class NetworkBuilder:
 
 
         processes = [
-            multiprocessing.Process(target=self.__getNodesForPeople,
+            multiprocessing.Process(target=self.getNodesForPeople,
                                      args=(opts.prefixes+opts.nodes,
                                            opts.endpoint, ids, node_values,
                                            opts.customHttpHeaders, lock)),
@@ -290,7 +292,7 @@ class NetworkBuilder:
         LOGGER.debug('edges {}'.format(len(G.edges())))
 
 
-    def __getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
+    def getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
 
         q = query.replace("<ID_SET>", ids)
         LOGGER.debug(q)
@@ -317,7 +319,7 @@ class NetworkBuilder:
         sparql.setQuery(query)
         sparql.setMethod(POST)
         sparql.setReturnFormat(JSON)
-
+        LOGGER.debug(query)
         if customHttpHeaders:
             for k,v in customHttpHeaders.items():
                 sparql.addCustomHttpHeader(k,v)
@@ -353,6 +355,7 @@ class QueryParams():
                 id = None,
                 optimize = 1.0,
                 format = NetworkBuilder.CYTOSCAPE,
+                log_level = 10, # "DEBUG"
                 removeMultipleLinks = True,
                 customHttpHeaders = None):
         self.endpoint = endpoint
@@ -365,3 +368,4 @@ class QueryParams():
         self.format = format
         self.removeMultipleLinks = removeMultipleLinks
         self.customHttpHeaders = customHttpHeaders
+        self.log_level = log_level

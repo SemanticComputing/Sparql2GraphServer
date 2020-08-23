@@ -1,0 +1,31 @@
+SELECT DISTINCT ?source ?target (1 AS ?weight) ?start ?end
+	#	(COUNT(DISTINCT ?letter) AS ?weight)
+WHERE 
+{
+	VALUES ?id { <ID> }
+	{
+	?id eschema:cofk_union_relationship_type-created ?letter .
+	?letter a eschema:Letter ;
+		eschema:cofk_union_relationship_type-was_addressed_to ?target .
+	BIND(?id AS ?source)
+	} UNION {
+	?letter eschema:cofk_union_relationship_type-was_addressed_to ?id ;
+				a eschema:Letter .
+	?source eschema:cofk_union_relationship_type-created ?letter ;
+	BIND(?id AS ?target)
+	}
+
+	#	filter 'unknown' etc entries
+	?source skos:prefLabel ?source__label . 
+	FILTER (!REGEX(?source__label, '(unknown|no_recipient_given)', 'i'))
+	?target skos:prefLabel ?target__label . 
+	FILTER (!REGEX(?target__label, '(unknown|no_recipient_given)', 'i'))
+
+	#	no self links
+	FILTER (?source!=?target)
+
+	#	timestamp
+	?letter crm:P4_has_time-span [ crm:P82a_begin_of_the_begin ?start ;
+                                  crm:P82b_end_of_the_end ?end ]
+
+} 

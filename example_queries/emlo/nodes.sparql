@@ -1,0 +1,8 @@
+SELECT DISTINCT ?id (?prefLabel AS ?name) ?class 
+WHERE {
+	VALUES ?class { crm:E21_Person crm:E74_Group }
+	VALUES ?id { <ID_SET> }
+	?id a ?class ;
+	skos:prefLabel ?prefLabel .
+}
+
