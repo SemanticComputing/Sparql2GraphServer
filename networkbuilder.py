@@ -8,6 +8,7 @@ import  logging
 import  multiprocessing
 import  networkx as nx
 
+import networkfunctions as fnx
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
 LOGGER  = logging.getLogger(__name__)
@@ -238,19 +239,15 @@ class NetworkBuilder:
 
     def distancesGraph(self, G, source, dct, lock=None):
         if source in G:
-            ans = nx.shortest_path_length(G.to_undirected(), source=source)
+            ans = fnx.distances(G, source) # nx.shortest_path_length(G.to_undirected(), source=source)
             self.__writeProperty(dct, ans.items(), 'distance', lock)
         else:
             LOGGER.debug("Source node {} not if graph, check the queries".format(source))
 
     def degreesGraph(self, G, dct, lock=None):
-        ans = G.in_degree()
-        self.__writeProperty(dct, ans, 'in_degree', lock)
-
-        ans = G.out_degree()
-        self.__writeProperty(dct, ans, 'out_degree', lock)
-        # print("degreesGraph process ready")
-
+        self.__writeProperty(dct, fnx.in_degree(G), 'in_degree', lock)
+        self.__writeProperty(dct, fnx.out_degree(G), 'out_degree', lock)
+        
 
     def __writeProperty(self, dct, ans, prop, lock):
         lock.acquire()
