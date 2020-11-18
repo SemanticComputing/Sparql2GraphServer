@@ -89,8 +89,9 @@ class NetworkBuilder:
             n0 = len(nodes)
             nodes = self.__uniqueNodesFromLinks(links)
             LOGGER.debug('depth: {}, nodes {}'.format(i+1, len(nodes)))
-
-            if len(nodes)>=limit or len(nodes)==n0:
+            
+            #   make at least 2 queries to received nodes further
+            if i>1 and len(nodes)>=limit or len(nodes)==n0:
                 break
 
         #   no resulting links, show the center node itself
@@ -114,7 +115,6 @@ class NetworkBuilder:
         LOGGER.debug("{} links found".format(len(links)))
 
         return self.__uniqueNodesFromLinks(links), links
-
 
 
     def generateGraph(self, nodes, links, opts):
@@ -149,7 +149,6 @@ class NetworkBuilder:
                     G.edges[src, trg][key] = ob[key]
 
         return G
-
 
     def getGraphDetails(self, G, opts):
         ids = ' '.join(['<{}>'.format(x) for x in G.nodes()])

@@ -147,8 +147,8 @@ function drawWithLabelTexts(elements) {
 	            selector: 'node',
 							style: {
 	                "shape": 'ellipse',
-							"height": ele => ele.data('size') || 12,
-	      					"width": ele => ele.data('size') || 12,
+							"height": ele => 5+50.*(ele.data('pagerank') || 0.001),
+	      					"width": ele => 5+50.*(ele.data('pagerank') || 0.001),
 							"text-valign": "center",
 							"text-halign": "right",
 	                		'background-color': ele => ele.data('color') || "#555",
