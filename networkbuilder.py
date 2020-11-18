@@ -1,5 +1,5 @@
 '''
-Created on 5.4.2019, modified 4.3.2020
+Created on 5.4.2019, modified 4.3.2020, 18.11.2020
 # coding: utf-8
 @author: petrileskinen
 '''
@@ -219,7 +219,7 @@ class NetworkBuilder:
         print(list(G.degree(weight='weight')))
         print("---")
         '''
-        
+
         while n > limit and iters<30:
 
             mindeg = min(dict(G.degree(weight='weight')).values())
@@ -236,12 +236,9 @@ class NetworkBuilder:
     def __uniqueNodesFromLinks(self, links):
         return set([n['source'] for n in links]) | set([n['target'] for n in links])
 
-
-
     def pagerankGraph(self, G, dct, alpha=0.85, lock=None):
         ans = nx.pagerank(G, alpha=alpha)
         self.__writeProperty(dct, ans.items(), 'pagerank', lock)
-
 
     def distancesGraph(self, G, source, dct, lock=None):
         if source in G:
@@ -251,10 +248,10 @@ class NetworkBuilder:
             LOGGER.debug("Source node {} not if graph, check the queries".format(source))
 
     def degreesGraph(self, G, dct, lock=None):
+        self.__writeProperty(dct, fnx.degree(G), 'degree', lock)
         self.__writeProperty(dct, fnx.in_degree(G), 'in_degree', lock)
         self.__writeProperty(dct, fnx.out_degree(G), 'out_degree', lock)
-        
-
+    
     def __writeProperty(self, dct, ans, prop, lock):
         lock.acquire()
         for k,v in ans:
