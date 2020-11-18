@@ -91,7 +91,7 @@ class NetworkBuilder:
             LOGGER.debug('depth: {}, nodes {}'.format(i+1, len(nodes)))
             
             #   make at least 2 queries to received nodes further
-            if i>1 and len(nodes)>=limit or len(nodes)==n0:
+            if i>1 and (len(nodes)>=limit or len(nodes)==n0):
                 break
 
         #   no resulting links, show the center node itself

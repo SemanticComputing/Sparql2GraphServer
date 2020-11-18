@@ -5,6 +5,10 @@ from flask_cors import CORS, cross_origin
 from networkbuilder import *
 nb = NetworkBuilder()
 
+from networkSignature import *
+ns = NetworkSignature()
+
+
 @app.route('/')
 @app.route('/query', methods=['GET', 'POST'])
 def queryGraph():
@@ -24,6 +28,7 @@ def queryGraph():
     response = jsonify(res)
     
     return response
+
 
 @app.route('/')
 @app.route('/graphml', methods=['GET', 'POST'])
@@ -46,6 +51,16 @@ def queryGraphML():
     
     return response
 
+
+@app.route('/')
+@app.route('/signature', methods=['GET', 'POST'])
+def querySignature():
+    if request.method == "POST":
+        data = request.json
+    else:
+        data = request.args.to_dict(flat=False)
+    res = ns.query(QueryParams(**data))
+    return jsonify(res)
 
 
 @app.after_request
