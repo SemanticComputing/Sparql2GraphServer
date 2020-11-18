@@ -16,9 +16,12 @@ from authorization import AUTHORIZATION_HEADER
 ENDPOINT = "https://ldf.fi/yoma/sparql"
 NBFENDPOINT = "http://ldf.fi/nbf/sparql"
 WIKIENDPOINT = "https://query.wikidata.org/sparql"
+EMLOENDPOINT = "http://ldf.fi/emlo/sparql"
 
-
-
+'''
+example to run testing:
+python testNetworkbuilder.py --links example_queries/emlo/links_ego.sparql --nodes example_queries/emlo/nodes.sparql --prefices example_queries/emlo/prefices.sparql --limit 5 --id  http://emlo.bodleian.ox.ac.uk/id/32e87fb3-2b0d-4662-8f3e-efeea2a8eb54 --log-level INFO
+'''
 def main(args):
 
     parser = argparse.ArgumentParser()
@@ -33,7 +36,7 @@ def main(args):
                         help='Sparql query for prefices')
     
     parser.add_argument('-e', '--endpoint', type=str,
-                        default="http://ldf.fi/emlo/sparql", help='Sparql query endpoint')
+                        default=EMLOENDPOINT, help='Sparql query endpoint')
     
     parser.add_argument('-i', '--id', type=str, required = False,
                         help='Id for egocentric network')

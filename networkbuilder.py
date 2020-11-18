@@ -73,7 +73,7 @@ class NetworkBuilder:
     """
     def egocentric(self, opts):
 
-        #   start node
+        #   start node(s)
         nodes = opts.id.split(' ')
 
         limit = int(opts.optimize*opts.limit)
@@ -98,7 +98,6 @@ class NetworkBuilder:
             nodes = [opts.id]
 
         return nodes, links
-
 
 
     def sociocentric(self, opts):
@@ -210,14 +209,21 @@ class NetworkBuilder:
             else:
                 G.remove_nodes_from(c)
 
-
         #    trim low degree nodes
         n = len(G.nodes())
         iters = 0
+        
+        '''
+        print(list(G.degree()))
+        print("---")
+        print(list(G.degree(weight='weight')))
+        print("---")
+        '''
+        
         while n > limit and iters<30:
 
-            mindeg = min(dict(G.degree()).values())
-            arr = [node for node,degree in dict(G.degree()).items() if degree==mindeg]
+            mindeg = min(dict(G.degree(weight='weight')).values())
+            arr = [node for node,degree in dict(G.degree(weight='weight')).items() if degree==mindeg]
 
             arr = arr[:n-limit]
             G.remove_nodes_from(arr)
@@ -292,7 +298,7 @@ class NetworkBuilder:
     def getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
 
         q = query.replace("<ID_SET>", ids)
-        LOGGER.debug(q)
+        # LOGGER.debug(q)
 
         arr = self.makeSparqlQuery(q, endpoint, customHttpHeaders)
 
@@ -316,7 +322,7 @@ class NetworkBuilder:
         sparql.setQuery(query)
         sparql.setMethod(POST)
         sparql.setReturnFormat(JSON)
-        LOGGER.debug(query)
+        # LOGGER.debug(query)
         if customHttpHeaders:
             for k,v in customHttpHeaders.items():
                 sparql.addCustomHttpHeader(k,v)
