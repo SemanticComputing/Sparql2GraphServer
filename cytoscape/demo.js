@@ -5,7 +5,7 @@ function load_data(params) {
 
 	var xhr = new XMLHttpRequest();
 
-	var url = GRAPH_SERVER+"/query";
+	var url = GRAPH_SERVER + "/query";
 
 	xhr.open('POST', url, true);
 	xhr.setRequestHeader('Content-type', 'application/json');
@@ -28,6 +28,7 @@ function load_data(params) {
 	};
 
 	show_info({status: "Performing the query"});
+	console.log(params);
 	xhr.send(params);
 }
 
@@ -91,22 +92,22 @@ function draw(elements) {
 	            selector: 'node',
 	            style: {
 	                "shape": 'ellipse',
-									"height": '16px',
-	      					"width": '16px',
-									"text-valign": "center",
-									"text-halign": "right",
-	                'background-color': 'data(color)',
-									content: ' data(label)'
+					"height": '16px',
+	      			"width": '16px',
+					"text-valign": "center",
+					"text-halign": "right",
+	                'background-color': 'red',
+					content: ' data(label)'
 	       		}
 	       	},
 	       	{
 	            selector: 'edge',
 	            style: {
 	            	'width': 'data(weight)',
-	              'line-color': '#999',
+	              'line-color': '#C0FFEE',
 		            content: ' data(name) ',
-		            'target-arrow-shape': 'triangle',
-		            'target-arrow-color': '#999',
+		            // 'target-arrow-shape': 'triangle',
+		            // 'target-arrow-color': '#999',
 		            color: '#555',
 		            'font-size': '6',
 		            'text-valign': 'top',
@@ -157,12 +158,12 @@ function drawWithLabelTexts(elements) {
 	       	{
 	            selector: 'edge',
 	            style: {
-	            	'width': ele => ele.data('weight') || 1,
+	            	'width': ele => 1, // ele.data('weight') || 1,
 	                'line-color': '#999',
 	                'curve-style': 'bezier',
 	                'content': ele => ele.data('name') || "",
-	        		'target-arrow-shape': 'triangle',
-	        		'target-arrow-color': '#999',
+	        		// 'target-arrow-shape': 'triangle',
+	        		// 'target-arrow-color': '#999',
 	        		'color': '#555',
 	        		'font-size': '9',
 	        		"text-valign": "top",
