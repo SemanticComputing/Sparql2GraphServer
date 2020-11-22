@@ -2,10 +2,10 @@ from app    import app
 from flask  import jsonify, request, Response
 from flask_cors import CORS, cross_origin
 
-from networkbuilder import *
+from networkbuilder import NetworkBuilder, QueryParams, LOGGER
 nb = NetworkBuilder()
 
-from networkSignature import *
+from networkSignature import NetworkSignature
 ns = NetworkSignature()
 
 

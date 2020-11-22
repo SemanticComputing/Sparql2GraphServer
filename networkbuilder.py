@@ -179,12 +179,11 @@ class NetworkBuilder:
             #                         args=(G, node_values, 500, lock)),
                     ]
 
-        if opts.id is not None:
+        if opts.id:
             #    distances in egocentric network
             processes.append(multiprocessing.Process(target=self.distancesGraph,
                                      args=(G, opts.id, node_values, lock)))
-
-
+        
         for p in processes:
             p.start()
 
@@ -241,10 +240,10 @@ class NetworkBuilder:
 
     def distancesGraph(self, G, source, dct, lock=None):
         if source in G:
-            ans = fnx.distances(G, source) # nx.shortest_path_length(G.to_undirected(), source=source)
+            ans = fnx.distances(G, source) # ans = nx.shortest_path_length(G.to_undirected(), source=source)
             self.__writeProperty(dct, ans.items(), 'distance', lock)
         else:
-            LOGGER.debug("Source node {} not if graph, check the queries".format(source))
+            LOGGER.debug("Source node '{}' not in graph, check the queries".format(source))
 
     def degreesGraph(self, G, dct, lock=None):
         self.__writeProperty(dct, fnx.degree(G), 'degree', lock)
