@@ -1,0 +1,106 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8">
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="https://unpkg.com/3d-force-graph"></script>
+	<script src="https://unpkg.com/neo4j-driver"></script>
+	
+	<script src="demo_webgl.js"></script>
+	<link href="demo_webgl.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body onload="update()" width="100%">
+<div class="left">
+	<div>Endpoint:<br>
+	<input type="text" id="endpoint" value="http://ldf.fi/ckcc/sparql"></input>
+	<br>ID:<br>
+	<input type="text" id="id" value="http://ldf.fi/ckcc/actors/p14583"></input>
+	<br>Limit:<br>
+	<input type="text" id="limit" value="75"></input>
+	<br>Optimize:<br>
+	<input type="text" id="optimize" value="1.5"></input>
+	<br>Authorization:<br>
+	<input type="text" id="Authorization" value="Basic ???"></input>
+	<br>Server:<br>
+	<select type="text" id="server" value="https://sparql-network.demo.seco.cs.aalto.fi">
+		<option value="http://127.0.0.1:5000">Localhost: http://127.0.0.1:5000</option>
+		<option value="https://sparql-network.demo.seco.cs.aalto.fi">Online server: https://sparql-network.demo.seco.cs.aalto.fi</option>
+	</select>
+	<br>
+	<button type="button" onclick="update()">Update</button>
+	<button type="button" onclick="updateGraphml()">Graphml</button>
+	<button type="button" onclick="updateSignature()">Signature</button>
+	<br>
+	<br>Prefixes:<br>
+	<textarea id="prefixes">PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX eschema: <http://emlo.bodleian.ox.ac.uk/schema#>
+PREFIX emlo_id: <http://emlo.bodleian.ox.ac.uk/id/>
+PREFIX actors: <http://ldf.fi/ckcc/actors/>
+PREFIX letters: <http://ldf.fi/ckcc/letters/>
+PREFIX places: <http://ldf.fi/ckcc/places/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX spatial: <http://jena.apache.org/spatial#>
+PREFIX sch: <http://schema.org/>
+PREFIX sdmx-code: <http://purl.org/linked-data/sdmx/2009/code#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX text: <http://jena.apache.org/text#>
+PREFIX wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ckccs: <http://ldf.fi/schema/ckcc/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+	</textarea>
+	<br>Links:<br>
+	<textarea id="links">
+SELECT DISTINCT ?source ?target 
+?weight 
+(STR(?weight) AS ?prefLabel)
+WHERE {
+	VALUES ?id { <ID> }
+	{
+		?tie ckccs:actor1 ?id ;
+		ckccs:actor2 ?target
+		BIND(?id AS ?source)
+	} UNION {
+		?tie ckccs:actor1 ?source ; 
+		ckccs:actor2 ?id
+		BIND(?id AS ?target)
+	}
+	?tie ckccs:num_letters ?weight .
+
+	?source skos:prefLabel ?source__label . 
+	FILTER (!REGEX(?source__label, '(unknown|no_recipient_given)', 'i'))
+	?target skos:prefLabel ?target__label . 
+	FILTER (!REGEX(?target__label, '(unknown|no_recipient_given)', 'i'))
+
+	FILTER (?source!=?target)
+} 
+	</textarea>
+	<br>
+	Nodes:<br>
+	<textarea id="nodes">
+SELECT DISTINCT ?id (?prefLabel AS ?name) ?class ?href
+WHERE {
+	VALUES ?class { crm:E21_Person crm:E74_Group }
+	VALUES ?id { <ID_SET> }
+	?id a ?class ;
+	skos:prefLabel ?_label .
+	BIND(REPLACE(?_label, ',[^,A-ZÜÅÄÖ]+$', '')AS ?prefLabel)
+	BIND(CONCAT("../", REPLACE(STR(?id), "^.*\\\\/(.+)", "$1"),"/letterNetwork") AS ?href)
+}</textarea>
+	</div>
+	<div class="right">
+		<div id="info"></div>
+		<div id="network"></div>
+	</div>
+</body>
+
+</html>
