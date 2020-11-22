@@ -173,7 +173,6 @@ function show_info(data) {
 }
 
 function update() {
-	console.log(ForceGraph3D)
 	console.log('Updating')
 	var params = {customHttpHeaders: {
 									//	for wikidata queries:

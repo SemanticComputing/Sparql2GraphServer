@@ -149,7 +149,6 @@ function draw(elements) {
 
 
 function drawWithLabelTexts(elements) {
-
 	var cy = cytoscape({
         container: document.getElementById('network'),
         elements: elements,

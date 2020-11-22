@@ -6,7 +6,7 @@
 	<title>Server Network Demo</title>
 
 	<script src="https://unpkg.com/3d-force-graph"></script>
-	<script src="https://unpkg.com/neo4j-driver"></script>
+	<!-- <script src="https://unpkg.com/neo4j-driver"></script> -->
 	
 	<script src="demo_webgl.js"></script>
 	<link href="demo_webgl.css" rel="stylesheet" type="text/css">
@@ -18,11 +18,11 @@
 	<div>Endpoint:<br>
 	<input type="text" id="endpoint" value="http://ldf.fi/ckcc/sparql"></input>
 	<br>ID:<br>
-	<input type="text" id="id" value="http://ldf.fi/ckcc/actors/p14583"></input>
+	<input type="text" id="id" value=""></input>
 	<br>Limit:<br>
-	<input type="text" id="limit" value="75"></input>
+	<input type="text" id="limit" value="750"></input>
 	<br>Optimize:<br>
-	<input type="text" id="optimize" value="1.5"></input>
+	<input type="text" id="optimize" value="1.0"></input>
 	<br>Authorization:<br>
 	<input type="text" id="Authorization" value="Basic ???"></input>
 	<br>Server:<br>
@@ -60,39 +60,23 @@ PREFIX owl: <http://www.w3.org/2002/07/owl#>
 	</textarea>
 	<br>Links:<br>
 	<textarea id="links">
-SELECT DISTINCT ?source ?target 
-?weight 
-(STR(?weight) AS ?prefLabel)
+SELECT DISTINCT (?actor as ?source) ?target ?weight (str(?weight) as ?prefLabel)
 WHERE {
-	VALUES ?id { <ID> }
-	{
-		?tie ckccs:actor1 ?id ;
-		ckccs:actor2 ?target
-		BIND(?id AS ?source)
-	} UNION {
-		?tie ckccs:actor1 ?source ; 
-		ckccs:actor2 ?id
-		BIND(?id AS ?target)
-	}
-	?tie ckccs:num_letters ?weight .
-
-	?source skos:prefLabel ?source__label . 
-	FILTER (!REGEX(?source__label, '(unknown|no_recipient_given)', 'i'))
-	?target skos:prefLabel ?target__label . 
-	FILTER (!REGEX(?target__label, '(unknown|no_recipient_given)', 'i'))
-
-	FILTER (?source!=?target)
-} 
+	?_tie ckccs:actor1 ?actor ;
+	ckccs:actor2 ?target ;
+	ckccs:num_letters ?weight .
+}
 	</textarea>
 	<br>
 	Nodes:<br>
 	<textarea id="nodes">
-SELECT DISTINCT ?id (?prefLabel AS ?name) ?class ?href
+SELECT DISTINCT ?id (?prefLabel AS ?name) ?class ?href ?gender
 WHERE {
 	VALUES ?class { crm:E21_Person crm:E74_Group }
 	VALUES ?id { <ID_SET> }
 	?id a ?class ;
-	skos:prefLabel ?_label .
+	skos:prefLabel ?_label ; 
+	foaf:gender ?gender .
 	BIND(REPLACE(?_label, ',[^,A-ZÜÅÄÖ]+$', '')AS ?prefLabel)
 	BIND(CONCAT("../", REPLACE(STR(?id), "^.*\\\\/(.+)", "$1"),"/letterNetwork") AS ?href)
 }</textarea>
