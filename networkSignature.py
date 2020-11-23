@@ -25,7 +25,8 @@ class NetworkSignature:
     def getTimeSignatures(self, opts,
                       bins=5,
                       max_rank=20,
-                      max_results=20):
+                      max_results=20,
+                      formatter="{:.3f}"):
         
         q = self.ego_query(opts)
         sparql = SPARQLWrapper(opts.endpoint)
@@ -40,13 +41,17 @@ class NetworkSignature:
         ts = ea.ss.t_signatures # dict containing the signatures and the nodes which appear in each
         year_edges = ea.ss.get_year_edges()
 
-        series = []
+        ssas = ea.ss.average_signature
+        XY = [(i, formatter.format(y)) for i,y in enumerate(ssas, start = 1)]
+        series = [dict(name='Average', data=XY)]
+        
         for (_,arr), year0, year1 in zip(ts.items(), year_edges[:-1], year_edges[1:]):
             series.append(dict(name="{}–{}".format(year0, year1),
-                            data=[(i, "{:.3f}".format(v)) for i,(_,v) in enumerate(arr.items(), start = 1)][:max_results]
+                            data=[(i, formatter.format(v)) for i,(_,v) in enumerate(arr.items(), start = 1)][:max_results]
                             ))
-        #   print(series)
-        return series 
+            
+        # print(series)
+        return series
 
     def ego_query(self, opts):
         q = opts.links
