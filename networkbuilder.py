@@ -7,14 +7,15 @@ Created on 5.4.2019, modified 4.3.2020, 18.11.2020
 import  logging
 import  multiprocessing
 import  networkx as nx
+import sys
 
 import networkfunctions as fnx
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
 LOGGER  = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO,
-                    format='%(levelname)-8s [%(filename)s: line %(lineno)d]:\t%(message)s',
-                    datefmt='%m-%d %H:%M')
+out_hdlr = logging.StreamHandler(sys.stdout)
+out_hdlr.setFormatter(logging.Formatter('%(levelname)-8s [%(filename)s: line %(lineno)d]:\t%(message)s', datefmt='%m-%d %H:%M'))
+out_hdlr.setLevel(logging.DEBUG)
 
 IDSET = '<ID_SET>'
 

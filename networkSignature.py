@@ -6,7 +6,7 @@ Created on 18.11.2020
 
 import logging
 
-from networkbuilder import QueryParams
+from networkbuilder import QueryParams, LOGGER
 from letter_analytics import ego, analytics
 import networkfunctions as fnx
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
