@@ -25,7 +25,7 @@ Returns JSON with fields *elements* for input to cytoscape.js, and *metrics* cur
 
 Simple HTML demo with plain javascript in folder *cytoscape*.
 
-Python 3.6.8
+Python 3.8.0
 requirements.txt
 
 ## Docker
