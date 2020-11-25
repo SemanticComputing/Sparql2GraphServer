@@ -3,3 +3,4 @@ __pycache__
 .pydevproject
 env/*
 .DS_*
+authorization.py
