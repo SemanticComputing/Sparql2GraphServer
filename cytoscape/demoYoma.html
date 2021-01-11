@@ -34,30 +34,33 @@
 	<br>
 	<br>Prefixes:<br>
 	<textarea id="prefixes">
-		PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-		PREFIX dct: <http://purl.org/dc/terms/>
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		PREFIX ys: <http://ldf.fi/schema/yoma/>
-		PREFIX owl: <http://www.w3.org/2002/07/owl#>
-		PREFIX schema: <http://schema.org/>
-		prefix bioc: <http://ldf.fi/schema/bioc/>
-		PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
-		PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-		PREFIX people: <http://ldf.fi/yoma/people/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX ys: <http://ldf.fi/schema/yoma/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX schema: <http://schema.org/>
+prefix bioc: <http://ldf.fi/schema/bioc/>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX people: <http://ldf.fi/yoma/people/>
+PREFIX rels: <http://ldf.fi/yoma/relations/>		
 	</textarea>
 	<br>Links:<br>
 	<textarea id="links">
-SELECT DISTINCT ?source ?target ("" AS ?name) (1 AS ?weight)
+SELECT DISTINCT ?source ?target (GROUP_CONCAT(DISTINCT ?link; separator="; ") AS ?name) (1.0-?val AS ?weight)
 WHERE {
-		  VALUES ?source { <ID> }
-		  VALUES ?prop { schema:date schema:place skos:broader
-		    bioc:inheres_in # ys:has_baptism ys:has_birth ys:has_burial ys:has_death
-
-ys:has_title ys:has_event ys:has_category ys:has_enrollment ys:related_occupation ys:student_nation ys:organization }
-		  ?source ?prop ?target .
-		  FILTER ISURI(?target)
-		  OPTIONAL { ?prop skos:prefLabel ?label . FILTER (LANG(?label)="fi") }
-		}
+	VALUES ?id { <ID> }
+	?node a ys:Distance ;
+		rels:relates_to ?id ;
+			rels:relates_to ?target ;
+			ys:value ?val .
+	FILTER (?id!=?target)
+	OPTIONAL { ?node ys:link_by [ skos:prefLabel ?link ; a ?link_class ] }
+	FILTER (REGEX(str(?link_class), 'yoma'))
+	BIND(?id as ?source)
+}
+GROUP BY ?source ?target ?val ORDER BY ?val
 	</textarea>
 	<br>
 	Nodes:<br>

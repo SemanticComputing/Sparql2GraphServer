@@ -193,7 +193,7 @@ function drawWithLabelTexts(elements) {
 	        		// 'target-arrow-shape': 'triangle',
 	        		// 'target-arrow-color': '#999',
 	        		'color': '#555',
-	        		'font-size': '9',
+	        		'font-size': '6',
 	        		"text-valign": "top",
 	        		"text-halign": "center",
 	        		'edge-text-rotation': 'autorotate',
