@@ -1,0 +1,98 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8">
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="cose demo_files/cytoscape.js"></script>
+	<script src="demo_nolayout.js"></script>
+	<link href="demo.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body onload="update()">
+<div class="split left">
+	<div>Endpoint:<br>
+	<input type="text" id="endpoint" value="http://ldf.fi/yoma/sparql"></input>
+	<br>ID:<br>
+	<input type="text" id="id" value="http://ldf.fi/yoma/people/p12346"></input>
+	<br>Limit:<br>
+	<input type="text" id="limit" value="75"></input>
+	<br>Optimize:<br>
+	<input type="text" id="optimize" value="1.0"></input>
+	<br>Authorization:<br>
+	<input type="text" id="Authorization" value="Basic c2Vjbzpsb2dvczAz"></input>
+	<br>Server:<br>
+	<select type="text" id="server" value="http://127.0.0.1:5000">
+		<option value="http://127.0.0.1:5000">Local http://127.0.0.1:5000</option>
+		<option value="https://sparql-network.demo.seco.cs.aalto.fi">Online</option>
+	</select>
+	<br>
+	<button type="button" onclick="update()">Update</button>
+	<button type="button" onclick="updateGraphml()">Graphml</button>
+	<br>
+	<br>Prefixes:<br>
+	<textarea id="prefixes">
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX ys: <http://ldf.fi/schema/yoma/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX schema: <http://schema.org/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX gvp: <http://vocab.getty.edu/ontology#>
+
+PREFIX bioc: <http://ldf.fi/schema/bioc/>
+PREFIX label: <http://ldf.fi/yoma/label/>
+PREFIX rels:  <http://ldf.fi/yoma/relations/> 
+PREFIX people:  <http://ldf.fi/yoma/people/> 
+PREFIX : <http://ldf.fi/schema/yoma/> 
+	</textarea>
+	<br>Links:<br>
+	<textarea id="links">
+SELECT DISTINCT ?source ?target (?prefLabel AS ?name) ?rel (1 as ?weight)
+WHERE {
+	VALUES ?id { <ID> }
+	VALUES ?rel { rels:f3 rels:f4 rels:f5 rels:f6 rels:f7 rels:f11 rels:f12 }
+	{
+		?id bioc:has_family_relation [ a ?rel ; a/rels:level ?level ; bioc:inheres_in ?target ] .
+		OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='fi') }
+		BIND(?id AS ?source)
+	}
+	UNION
+	{
+		?source bioc:has_family_relation [ a ?rel ; a/rels:level ?level ; bioc:inheres_in ?id ] .
+		OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='fi') }
+		BIND(?id AS ?target)
+	}
+}
+ORDER BY ?level
+	</textarea>
+	<br>
+	Nodes:<br>
+	<textarea id="nodes">
+SELECT DISTINCT ?id (?prefLabel AS ?name) ?gender ?color ?size ?href ?y
+WHERE {
+	VALUES (?class ?size) { (:Person "16px") (:ReferencedPerson "12px") }
+	VALUES ?id { <ID_SET> }
+	?id a ?class ;
+				skos:prefLabel ?prefLabel .
+	OPTIONAL {
+	?id schema:gender/skos:prefLabel ?gender . FILTER(lang(?gender)="fi")
+			VALUES (?gender ?color) { ("Mies"@fi "blue") ("Nainen"@fi "red") }
+			}
+	OPTIONAL { ?id :date_of_origin/gvp:estStart ?btime }
+	OPTIONAL { ?id :date_of_end/gvp:estStart ?dtime }
+	BIND(year(COALESCE(?btime, ?dtime-"P25550DT0H0M0S"^^xsd:duration)) AS ?y)
+		BIND(CONCAT("../", REPLACE(STR(?id), "^.*\\/(.+)", "$1"),"/familyNetwork") AS ?href)
+} </textarea>
+	</div>
+	<div class="split right">
+	<div id="info"></div>
+	<div id="network"></div>
+	</div>
+</body>
+
+</html>
