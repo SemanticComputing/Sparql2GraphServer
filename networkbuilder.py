@@ -1,5 +1,5 @@
 '''
-Created on 5.4.2019, modified 4.3.2020, 18.11.2020
+Created on 5.4.2019, modified 4.3.2020, 18.11.2020, 2.1.2021
 # coding: utf-8
 @author: petrileskinen
 '''
@@ -7,10 +7,12 @@ Created on 5.4.2019, modified 4.3.2020, 18.11.2020
 import  logging
 import  multiprocessing
 import  networkx as nx
+import numpy as np
 import sys
 
 import networkfunctions as fnx
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
+from sklearn.preprocessing import MinMaxScaler
 
 LOGGER  = logging.getLogger(__name__)
 out_hdlr = logging.StreamHandler(sys.stdout)
@@ -57,6 +59,15 @@ class NetworkBuilder:
             LOGGER.error("{} occured".format(e))
             LOGGER.error("{}".format(node_data))
             raise e
+        
+        '''
+        Check if coordinates need adjusting based on ?_x or ?_y result value
+        '''
+        for _,v in G.nodes(data=True):
+            if ('_x' in v.keys() or '_y' in v.keys()):
+                LOGGER.debug("self.adjustPositions")
+                self.adjustPositions(G)
+                break
 
         if opts.format == NetworkBuilder.GRAPHML:
 
@@ -89,10 +100,11 @@ class NetworkBuilder:
             #   grow source nodes with the previous result
             n0 = len(nodes)
             nodes = self.__uniqueNodesFromLinks(links)
-            LOGGER.debug('depth: {}, nodes {}'.format(i+1, len(nodes)))
+            LOGGER.debug('Depth: {}, nodes {}, limit {}.'.format(i+1, len(nodes), limit))
             
             #   make at least 2 queries to received nodes further
-            if i>1 and (len(nodes)>=limit or len(nodes)==n0):
+            if len(nodes)>=limit or len(nodes)==n0:
+                LOGGER.debug('Breaking.')
                 break
 
         #   no resulting links, show the center node itself
@@ -123,7 +135,7 @@ class NetworkBuilder:
         G = nx.DiGraph()
 
         #    get all other fields except 'id' in nodes,
-        #    e.g. queried parameters in SELECT ?x ?y ...:
+        #    e.g. queried parameters in SELECT ?label ?gender ...:
         node_keys = set([key for ob in nodes for key in ob.keys()]) - set(['id'])
 
         for ob in nodes:
@@ -176,10 +188,10 @@ class NetworkBuilder:
                                      args=(G, node_values, lock)),
             multiprocessing.Process(target=self.graphMetrics,
                                      args=(G, metrics, lock))
-            #multiprocessing.Process(target=self.layoutGraph,
-            #                         args=(G, node_values, 500, lock)),
-                    ]
-
+            ]
+        '''
+        
+        '''
         if opts.id:
             #    distances in egocentric network
             processes.append(multiprocessing.Process(target=self.distancesGraph,
@@ -196,7 +208,6 @@ class NetworkBuilder:
 
 
     def densifyGraph(self, G, limit):
-
         #    remove small connected components
         wcc = sorted(nx.weakly_connected_components(G),
                      key=len, reverse=True)
@@ -209,25 +220,20 @@ class NetworkBuilder:
                 G.remove_nodes_from(c)
 
         #    trim low degree nodes
-        n = len(G.nodes())
+        n = G.number_of_nodes()
         iters = 0
         
-        '''
-        print(list(G.degree()))
-        print("---")
-        print(list(G.degree(weight='weight')))
-        print("---")
-        '''
-
-        while n > limit and iters<30:
-
-            mindeg = min(dict(G.degree(weight='weight')).values())
-            arr = [node for node,degree in dict(G.degree(weight='weight')).items() if degree==mindeg]
-
-            arr = arr[:n-limit]
+        while n > limit and iters<20:
+            # Remove low degree nodes in a couple of batches:
+            arr = sorted([(k,v) for k,v in G.degree(weight='weight')], key = lambda x: x[1])
+            
+            m = min(n-limit, limit)
+            arr = [k for k,_ in arr[:m]]
+            
             G.remove_nodes_from(arr)
-            n = len(G.nodes())
+            n = G.number_of_nodes()
             iters += 1
+            LOGGER.debug("Currently {} nodes at step {}.".format(n, iters))
             # self.printGraph(G)
 
 
@@ -282,9 +288,11 @@ class NetworkBuilder:
         m['diameter'] = d
         m['number_connected_components'] = ncc
         m['average_degree'] = avd
+        m['number_of_nodes'] = G.number_of_nodes()
+        m['number_of_edges'] = G.number_of_edges()
+        
         metrics = m
         lock.release()
-
 
     def __debugGraph(self, G):
         LOGGER.debug('nodes {}'.format(len(G.nodes())))
@@ -311,6 +319,36 @@ class NetworkBuilder:
 
     def __init__(self):
         pass
+
+        
+    def adjustPositions(self, G, pos = None, iters = (10,10)):
+        '''
+        Adjust x and y coordinates of the nodes if ?x or ?y are found in the sparql query result set.
+        '''
+        for coord, newcoord in [('_x', 'x'), ('_y', 'y')]:
+            dct = dict([(k, v.get(coord)) for k,v in G.nodes(data=True) if v.get(coord)])
+            if len(dct):
+                coord_scaler = MinMaxScaler(feature_range=(-1,1))
+            
+                data = list(dct.values())
+                sdata = coord_scaler.fit_transform(np.reshape(np.array(data), (-1, 1)))
+                for k,s in zip(dct.keys(), sdata):
+                    G.nodes[k][newcoord] = s[0]
+
+        for _ in range(iters[0]):
+            #   adjust layout
+            pos = nx.drawing.layout.fruchterman_reingold_layout(G, iterations=iters[1], pos = pos)
+            
+            #   force fixed points
+            for k,v in G.nodes(data=True):
+                pos[k][0] = v.get('x', pos[k][0])
+                pos[k][1] = v.get('y', pos[k][1])
+
+        for k,_ in G.nodes(data=True):
+            G.nodes[k]['x'] = pos[k][0]
+            G.nodes[k]['y'] = pos[k][1]
+        
+        return pos
 
 
     def makeSparqlQuery(self, query, endpoint, customHttpHeaders=None):
@@ -368,3 +406,4 @@ class QueryParams():
         self.removeMultipleLinks = removeMultipleLinks
         self.customHttpHeaders = customHttpHeaders
         self.log_level = log_level
+        self.adjust_layout = False
