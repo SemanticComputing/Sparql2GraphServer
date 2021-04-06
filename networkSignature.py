@@ -19,9 +19,10 @@ logging.basicConfig(level=logging.INFO,
 class NetworkSignature:
 
     def query(self, opts):
-        return dict(series=self.getTimeSignatures(opts))
-        # return dict(series=self.__dummyresult())
-
+        #   return dict(series=self.getTimeSignatures(opts))
+        res = self.getTimeSignatures(opts) # self.__dummyresult()
+        return dict([ (ob['name'], ob['data']) for ob in res] )
+    
     def getTimeSignatures(self, opts,
                       bins=5,
                       max_rank=20,
@@ -43,14 +44,14 @@ class NetworkSignature:
 
         ssas = ea.ss.average_signature
         XY = [(i, formatter.format(y)) for i,y in enumerate(ssas, start = 1)]
-        series = [dict(name='Average', data=XY)]
+        series = [dict(name='average', data=XY)]
         
         for (_,arr), year0, year1 in zip(ts.items(), year_edges[:-1], year_edges[1:]):
             series.append(dict(name="{}–{}".format(year0, year1),
                             data=[(i, formatter.format(v)) for i,(_,v) in enumerate(arr.items(), start = 1)][:max_results]
                             ))
             
-        # print(series)
+        #   print(series)
         return series
 
     def ego_query(self, opts):
