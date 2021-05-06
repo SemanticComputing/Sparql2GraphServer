@@ -5,7 +5,7 @@ Click==7.0
 cycler==0.10.0
 decorator==4.4.1
 Flask==1.1.1
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 idna==2.10
 isodate==0.6.0
 isort==4.3.21
