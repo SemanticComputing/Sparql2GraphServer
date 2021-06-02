@@ -32,6 +32,6 @@ sklearn==0.0
 SPARQLWrapper==1.8.4
 threadpoolctl==2.1.0
 toml==0.10.1
-urllib3==1.25.10
+urllib3==1.26.5
 Werkzeug==0.16.0
 wrapt==1.12.1
