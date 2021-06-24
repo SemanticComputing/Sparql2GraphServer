@@ -92,6 +92,63 @@ function load_signature(params) {
 	xhr.send(params);
 }
 
+class ValueScaler {
+	a;
+	b;
+	constructor (low, high) {
+	  this.low = low
+	  this.high = high
+	}
+  
+	fit (vals) {
+	  const valmin = Math.min(...vals)
+	  const valmax = Math.max(...vals)
+	  if (valmax === valmin) {
+		this.a = 0.0
+	  } else {
+		this.a = (this.high - this.low) / (valmax - valmin)
+	  }
+	  this.b = this.low - valmin * this.a
+	}
+  
+	transform (vals) {
+	  return vals.map(x => { return x * this.a + this.b })
+	}
+  
+	fitTransform (vals) {
+	  this.fit(vals)
+	  return this.transform(vals)
+	}
+  }
+
+
+class ColorScaler extends ValueScaler {
+	col1;
+	col2;
+	constructor (low, high) {
+	  super(0.0, 1.0)
+	  this.col1 = low
+	  this.col2 = high
+	}
+  
+	// super.fit(vals)
+  
+	_process (s0, s1, r) {
+	  const x0 = parseInt(s0)
+	  const x1 = parseInt(s1)
+	  if (isNaN(x0) || isNaN(x1)) return s0
+	  return Math.floor(x0 + (x1 - x0) * r)
+	}
+  
+	transform (vals) {
+	  const s1 = this.col1.split(/(\d+)/)
+	  const s2 = this.col2.split(/(\d+)/)
+	  const _vals01 = vals.map(x => { return x * this.a + this.b })
+  
+	  return _vals01.map(v => s1.map((s, i) => this._process(s, s2[i], v)).join(''))
+	}
+  }
+  
 // Start showing cytoscape view
 function draw(elements) {
 
@@ -149,6 +206,22 @@ function draw(elements) {
 
 
 function drawWithLabelTexts(elements) {
+	// nodes
+	console.log(elements.nodes)
+
+	let arr = elements.nodes.map(ele => ele.data.distance || 0)
+	let res = (new ValueScaler(35.0, 5.0)).fitTransform(arr)
+  	elements.nodes.forEach((ele, i) => { ele.data.size = res[i] })
+
+	// arr = elements.nodes.map(ele => ele.data.distance || 0)
+	res = (new ColorScaler('rgb(255, 0, 0)', 'rgb(0, 0, 255)')).fitTransform(arr)
+	elements.nodes.forEach((ele, i) => { ele.data.color = res[i] })
+
+	//  edge width
+	arr = elements.edges.map(ele => ele.data.weight || 1)
+	res = (new ValueScaler(1.0, 12.0)).fitTransform(arr)
+	elements.edges.forEach((ele, i) => { ele.data.weight = res[i] })
+
 	var cy = cytoscape({
         container: document.getElementById('network'),
         elements: elements,
@@ -174,9 +247,11 @@ function drawWithLabelTexts(elements) {
 	        {
 	            selector: 'node',
 							style: {
-	                "shape": 'ellipse',
-							"height": ele => 5+50.*(ele.data('pagerank') || 0.001),
-	      					"width": ele => 5+50.*(ele.data('pagerank') || 0.001),
+	                		"shape": 'ellipse',
+							"height": ele => ele.data('size'),
+	      					"width": ele => ele.data('size'),
+							// "height": ele => 3+100*(ele.data('pagerank') || 1),
+	      					// "width": ele => 3+100*(ele.data('pagerank') || 1),
 							"text-valign": "center",
 							"text-halign": "right",
 	                		'background-color': ele => ele.data('color') || "#555",
@@ -186,11 +261,11 @@ function drawWithLabelTexts(elements) {
 	       	{
 	            selector: 'edge',
 	            style: {
-	            	'width': ele => 1, // ele.data('weight') || 1,
+	            	'width': ele => ele.data('weight') || 1,
 	                'line-color': '#999',
 	                'curve-style': 'bezier',
 	                'content': ele => ele.data('name') || "",
-	        		// 'target-arrow-shape': 'triangle',
+	        		'target-arrow-shape': 'triangle',
 	        		// 'target-arrow-color': '#999',
 	        		'color': '#555',
 	        		'font-size': '6',

@@ -37,20 +37,28 @@ PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 	</textarea>
 	<br>Links:<br>
 	<textarea id="links">
-SELECT DISTINCT ?source ?target (?label AS ?name) (1 AS ?weight) WHERE {
-  VALUES ?source { <ID> } 
-  VALUES (?rel ?label) { (wdt:P802 "student") (wdt:P185 "doctoral student") }
-  ?source ?rel ?target
-}	</textarea>
+SELECT DISTINCT ?source ?target ?name (COUNT(?link)+1 AS ?weight) WHERE {
+	VALUES ?source { <ID> }
+		VALUES (?rel ?name) { (wdt:P802 "Student") (wdt:P185 "Doctoral student") }
+	?source ?rel ?target
+	OPTIONAL { 
+		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+		?source ?prop ?link . ?target ?prop ?link 
+	}
+	} GROUPBY ?source ?target ?name 	</textarea>
     <br>
     Nodes:<br>
 	<textarea id="nodes">
-SELECT DISTINCT ?id (?label AS ?name) ?image WHERE {
-  VALUES ?id { <ID_SET> }
-  ?id rdfs:label ?label .
-  FILTER (LANG(?label) = "en").
-  OPTIONAL { ?id wdt:P18 ?image }
-}
+SELECT DISTINCT ?id ?name ?image (COUNT(?link)+1 AS ?size) WHERE {
+	VALUES ?id { <ID_SET> }
+	?id rdfs:label ?name .
+	FILTER (LANG(?name) = "en").
+	OPTIONAL { ?id wdt:P18 ?image }
+	OPTIONAL { 
+		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+		?id ?prop ?link
+	}
+	} GROUP BY ?id ?name ?image 
 	</textarea>
 	
 	</div>
