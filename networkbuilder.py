@@ -4,11 +4,13 @@ Created on 5.4.2019, modified 4.3.2020, 18.11.2020, 2.1.2021
 @author: petrileskinen
 '''
 
-import  logging
-import  multiprocessing
-import  networkx as nx
+import logging
+import multiprocessing
+import networkx as nx
 import numpy as np
 import sys
+import time
+from typing import Dict, List, Set, Tuple, Type, Union
 
 import networkfunctions as fnx
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
@@ -19,31 +21,38 @@ out_hdlr = logging.StreamHandler(sys.stdout)
 out_hdlr.setFormatter(logging.Formatter('%(levelname)-8s [%(filename)s: line %(lineno)d]:\t%(message)s', datefmt='%m-%d %H:%M'))
 out_hdlr.setLevel(logging.DEBUG)
 
-IDSET = '<ID_SET>'
+IDSET: str = '<ID_SET>'
 
 
 class NetworkBuilder:
-    CYTOSCAPE   = 'cytoscape'
-    GRAPHML     = 'graphml'
+    CYTOSCAPE: str   = 'cytoscape'
+    GRAPHML: str     = 'graphml'
 
-    def query(self, opts):
+    DEPTH_MAX: int   = 30
+
+    def query(self, opts: Dict) -> Dict:
         if opts.log_level:
             LOGGER.setLevel(opts.log_level)
 
+        t0 = time.time()
         if opts.id:
             #   if opts.id is provided, query a egocentric network
             nodes, links = self.egocentric(opts)
         else:
-            #   otherwise a sampled network
+            #   otherwise a sampled, sociocentric network
             nodes, links = self.sociocentric(opts)
+        # LOGGER.debug('1: {} sec.'.format(time.time()-t0))
 
         G = self.generateGraph([{'id': n} for n in nodes], links, opts)
+        # LOGGER.debug('2: {} sec.'.format(time.time()-t0))
 
-        self.__debugGraph(G)
+        # self.__debugGraph(G)
         self.densifyGraph(G, opts.limit)
+        # LOGGER.debug('3: {} sec.'.format(time.time()-t0))
 
-        self.__debugGraph(G)
+        # self.__debugGraph(G)
         node_data, metrics = self.getGraphDetails(G, opts)
+        # LOGGER.debug('4: {} sec.'.format(time.time()-t0))
 
         #   if optimize>1, removed nodes causing trouble
         try:
@@ -70,20 +79,21 @@ class NetworkBuilder:
                 break
 
         if opts.format == NetworkBuilder.GRAPHML:
-
+            # Choose graphml as the return format
             res = '\n'.join(nx.generate_graphml(G, prettyprint=True))
-
         else:
-
+            # JSON for cytoscape as the return format
             res = nx.readwrite.json_graph.cytoscape_data(G)
             res['metrics'] = metrics
+        
+        # LOGGER.debug('5: {} sec.'.format(time.time()-t0))
 
         return res
 
-    """
-    Find the network by sequential BFSearches
-    """
-    def egocentric(self, opts):
+    def egocentric(self, opts: Dict) -> Tuple[Union[List, Set], Dict]:
+        """
+        Construct the network by sequential BFSearches
+        """
 
         #   start node(s)
         nodes = opts.id.split(' ')
@@ -91,16 +101,19 @@ class NetworkBuilder:
         limit = int(opts.optimize*opts.limit)
         LOGGER.debug("Limit set to {}".format(limit))
 
-        for i in range(30):
+        t0 = time.time()
+        # no more than DEPTH_MAX steps:
+        for i in range(self.DEPTH_MAX):
+
             node_list = ' '.join(["<{}>".format(n) for n in nodes])
             query = opts.links.replace('<ID>', node_list)
-
+            
             links = self.makeSparqlQuery(opts.prefixes+' '+query, opts.endpoint, opts.customHttpHeaders)
 
             #   grow source nodes with the previous result
             n0 = len(nodes)
             nodes = self.__uniqueNodesFromLinks(links)
-            LOGGER.debug('Depth: {}, nodes {}, limit {}.'.format(i+1, len(nodes), limit))
+            LOGGER.debug('Depth: {}, nodes {}, {} sec.'.format(i+1, len(nodes), time.time()-t0))
             
             #   make at least 2 queries to received nodes further
             if len(nodes)>=limit or len(nodes)==n0:
@@ -114,7 +127,7 @@ class NetworkBuilder:
         return nodes, links
 
 
-    def sociocentric(self, opts):
+    def sociocentric(self, opts: Dict) -> Tuple[Set, Dict]:
 
         limit = int(opts.optimize*opts.limit)
         # query = opts.prefixes +' '+ opts.links + " LIMIT {}".format(limit)
@@ -130,7 +143,7 @@ class NetworkBuilder:
         return self.__uniqueNodesFromLinks(links), links
 
 
-    def generateGraph(self, nodes, links, opts):
+    def generateGraph(self, nodes: Dict, links: Dict, opts: Dict) -> (nx.Graph):
 
         G = nx.DiGraph()
 
@@ -142,41 +155,50 @@ class NetworkBuilder:
             _id = ob['id']
             G.add_node(_id)
             for key in node_keys:
-                if key in ob:
-                    G.nodes[_id][key] = ob[key]
+                v = ob.get(key)
+                if v:
+                    G.nodes[_id][key] = v
 
         #    get all other fields except 'source' and 'target' in nodes,
         #    e.g. queried parameters in SELECT ?x ?y ...:
         edge_keys = set([key for ob in links for key in ob.keys()]) - set(['source', 'target'])
 
-
         for ob in links:
-            src = ob['source']
-            trg = ob['target']
+            src, trg = ob['source'], ob['target']
+
             if G.has_edge(trg, src) and opts.removeMultipleLinks:
                 continue
-
+            
             G.add_edge(src, trg)
+
+            #   add query results:
             for key in edge_keys:
-                if key in ob:
-                    G.edges[src, trg][key] = ob[key]
+                v = ob.get(key)
+                if v:
+                    G.edges[src, trg][key] = v
 
         return G
 
-    def getGraphDetails(self, G, opts):
-        ids = ' '.join(['<{}>'.format(x) for x in G.nodes()])
 
-        manager = multiprocessing.Manager()
-        lock = multiprocessing.Lock()
+    def getGraphDetails(self, G: (nx.Graph), opts: Dict) -> List[Dict]:
+        '''
+        1) Fetch the node metadata by the opts.nodes query
+        2) Calculate the network metrics, 
+            - in/out_degrees for nodes
+            - pagerank for nodes
+            - diameter, number_of_edges, number_connected_components, average_degree', number_of_nodes, number_of_nodes for the entire graph
+        '''
 
-        node_values = manager.dict()
-        for n in G.nodes():
-            node_values[n] = manager.dict()
-            node_values[n]['id'] = n
+        manager, lock = multiprocessing.Manager(), multiprocessing.Lock()
+
+        node_values = manager.dict([(n, manager.dict(id=n)) for n in G.nodes()])
+        #for n in G.nodes():
+        #    node_values[n] = manager.dict()
+        #    node_values[n]['id'] = n
 
         metrics = manager.dict()
 
-
+        ids = ' '.join(['<{}>'.format(x) for x in G.nodes()])
         processes = [
             multiprocessing.Process(target=self.getNodesForPeople,
                                      args=(opts.prefixes+opts.nodes,
@@ -189,9 +211,7 @@ class NetworkBuilder:
             multiprocessing.Process(target=self.graphMetrics,
                                      args=(G, metrics, lock))
             ]
-        '''
         
-        '''
         if opts.id:
             #    distances in egocentric network
             processes.append(multiprocessing.Process(target=self.distancesGraph,
@@ -207,11 +227,15 @@ class NetworkBuilder:
 
 
 
-    def densifyGraph(self, G, limit):
+    def densifyGraph(self, G: (nx.Graph), limit: int) -> None:
+        '''
+        Densify the graph by removing
+        - small connected components
+        - low-degree nodes at the edge of network 
+        '''
         #    remove small connected components
         wcc = sorted(nx.weakly_connected_components(G),
                      key=len, reverse=True)
-
         count = 0
         for c in wcc:
             if count<limit:
@@ -225,7 +249,7 @@ class NetworkBuilder:
         
         while n > limit and iters<20:
             # Remove low degree nodes in a couple of batches:
-            arr = sorted([(k,v) for k,v in G.degree(weight='weight')], key = lambda x: x[1])
+            arr = sorted([(k,v) for k,v in G.degree(weight=None)], key = lambda x: x[1])
             
             m = min(n-limit, limit)
             arr = [k for k,_ in arr[:m]]
@@ -237,37 +261,55 @@ class NetworkBuilder:
             # self.printGraph(G)
 
 
-    #   return an unique set of nodes as sources and targets of links
-    def __uniqueNodesFromLinks(self, links):
+    def __uniqueNodesFromLinks(self, links: Dict) -> Set:
+        '''
+        returns an unique set of nodes as sources and targets of links
+        '''
         return set([n['source'] for n in links]) | set([n['target'] for n in links])
 
-    def pagerankGraph(self, G, dct, alpha=0.85, lock=None):
+
+    def pagerankGraph(self, G: (nx.Graph), dct, alpha: float=0.85, lock=None) -> None:
+        '''
+        Calculates pagerank metric for each node
+        '''
+        t0 = time.time()
         ans = nx.pagerank(G, alpha=alpha)
         self.__writeProperty(dct, ans.items(), 'pagerank', lock)
+        # LOGGER.debug('pagerankGraph: {} sec.'.format(time.time()-t0))
 
-    def distancesGraph(self, G, source, dct, lock=None):
+
+
+    def distancesGraph(self, G: (nx.Graph), source: str, dct: Dict, lock=None) -> None:
+        '''
+        Calculates paths lengths from 'ego' to each 'alter' node in an egocentric network
+        '''
         if source in G:
             ans = fnx.distances(G, source) # ans = nx.shortest_path_length(G.to_undirected(), source=source)
             self.__writeProperty(dct, ans.items(), 'distance', lock)
         else:
             LOGGER.debug("Source node '{}' not in graph, check the queries".format(source))
 
-    def degreesGraph(self, G, dct, lock=None):
-        self.__writeProperty(dct, fnx.degree(G), 'degree', lock)
-        self.__writeProperty(dct, fnx.in_degree(G), 'in_degree', lock)
-        self.__writeProperty(dct, fnx.out_degree(G), 'out_degree', lock)
-    
-    def __writeProperty(self, dct, ans, prop, lock):
-        lock.acquire()
-        for k,v in ans:
-            dd = dct[k]
-            dd[prop] = v
-            dct[k] = dd
-        lock.release()
+
+    def degreesGraph(self, G: (nx.Graph), dct: Dict, lock=None) -> None:
+        '''
+        Calculates node degree values, (degree, in and out degree, all both weighted and unweighted)
+        '''
+        t0 =time.time()
+        self.__writeProperty(dct, fnx.degree(G, weight=None), 'degree', lock)
+        self.__writeProperty(dct, fnx.in_degree(G, weight=None), 'in_degree', lock)
+        self.__writeProperty(dct, fnx.out_degree(G, weight=None), 'out_degree', lock)
+
+        self.__writeProperty(dct, fnx.degree(G, weight='weight'), 'degree_weighted', lock)
+        self.__writeProperty(dct, fnx.in_degree(G, weight='weight'), 'in_degree_weighted', lock)
+        self.__writeProperty(dct, fnx.out_degree(G, weight='weight'), 'out_degree_weighted', lock)
+        # LOGGER.debug('degreesGraph: {} sec.'.format(time.time()-t0))
 
 
-    def graphMetrics(self, G, metrics, lock=None):
-
+    def graphMetrics(self, G: (nx.Graph), metrics: Dict, lock=None) -> None:
+        '''
+        Calculate general network metrics, e.g. diameter, number_of_edges, number_connected_components, average_degree', number_of_nodes, number_of_nodes 
+        '''
+        t0 = time.time()
         if len(G.nodes())==0 or len(G.edges)==0:
             return
 
@@ -294,34 +336,47 @@ class NetworkBuilder:
         metrics = m
         lock.release()
 
-    def __debugGraph(self, G):
+        # LOGGER.debug('graphMetrics: {} sec.'.format(time.time()-t0))
+
+    def __debugGraph(self, G) -> None:
         LOGGER.debug('nodes {}'.format(len(G.nodes())))
         LOGGER.debug('edges {}'.format(len(G.edges())))
 
 
-    def getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None):
+    def getNodesForPeople(self, query, endpoint, ids, dct, customHttpHeaders=None, lock=None) -> None:
 
+        t0= time.time()
         q = query.replace("<ID_SET>", ids)
-        # LOGGER.debug(q)
-
+        
         arr = self.makeSparqlQuery(q, endpoint, customHttpHeaders)
-
+        # LOGGER.debug('1. getNodesForPeople: {} sec.'.format(time.time()-t0))
+        lock.acquire()
         for ob in arr:
             n = ob['id']
-            lock.acquire()
-            nn = dct[n]
-            for k,v in ob.items():
-                nn[k] = v
+            dct[n] = {**dct[n], **ob} # nn
+        lock.release()
+        # LOGGER.debug('2. getNodesForPeople: {} sec.'.format(time.time()-t0))
+    '''
+    DEBUG    [networkbuilder.py: line 350]:	1. getNodesForPeople: 0.8707551956176758 sec.
+    DEBUG    [networkbuilder.py: line 359]:	2. getNodesForPeople: 2.7612321376800537 sec.
+    '''
 
-            dct[n] = nn
-            lock.release()
+    def __writeProperty(self, dct, ans, prop, lock) -> None:
+        '''
+        Write values to multiprocessing result
+        '''
+        lock.acquire()
+        for k,v in ans:
+            dd = dct[k]
+            dd[prop] = v
+            dct[k] = dd
+        lock.release()
 
-
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
         
-    def adjustPositions(self, G, pos = None, iters = (10,10)):
+    def adjustPositions(self, G: (nx.Graph), pos: Dict = None, iters: Tuple[int,int] = (10,10)) -> Dict:
         '''
         Adjust x and y coordinates of the nodes if ?x or ?y are found in the sparql query result set.
         '''
@@ -351,7 +406,7 @@ class NetworkBuilder:
         return pos
 
 
-    def makeSparqlQuery(self, query, endpoint, customHttpHeaders=None):
+    def makeSparqlQuery(self, query: str, endpoint: str, customHttpHeaders: Dict = None) -> List[Dict]:
         sparql = SPARQLWrapper(endpoint)
         sparql.setQuery(query)
         sparql.setMethod(POST)
@@ -365,23 +420,23 @@ class NetworkBuilder:
             results = sparql.query().convert()
         except Exception as e:
             raise e
-
+        
         data = []
         for result in results["results"]["bindings"]:
             ob = {}
             for k,v in result.items():
+                #   convert common datatypes:
                 if v.get('datatype') == 'http://www.w3.org/2001/XMLSchema#decimal':
                     ob[k] = float(v['value'])
                 elif v.get('datatype') == 'http://www.w3.org/2001/XMLSchema#integer':
                     ob[k] = int(v['value'])
-
-                # this does not export correctly to cytoscape format:
-                #elif v.get('datatype') == 'http://www.w3.org/2001/XMLSchema#date':
+                # NB. this does not export correctly to cytoscape format:
+                # elif v.get('datatype') == 'http://www.w3.org/2001/XMLSchema#date':
                 #    ob[k] = datetime.datetime.strptime(v['value'], '%Y-%m-%d').date()
-
                 else:
                     ob[k] = str(v['value'])
             data.append(ob)
+
         return data
 
 
