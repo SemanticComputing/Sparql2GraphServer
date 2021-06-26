@@ -209,17 +209,17 @@ function drawWithLabelTexts(elements) {
 	// nodes
 	console.log(elements.nodes)
 
-	let arr = elements.nodes.map(ele => ele.data.distance || 0)
-	let res = (new ValueScaler(35.0, 5.0)).fitTransform(arr)
+	let arr = elements.nodes.map(ele => Math.sqrt(ele.data.out_degree) || 0)
+	let res = (new ValueScaler(10.0, 35.0)).fitTransform(arr)
   	elements.nodes.forEach((ele, i) => { ele.data.size = res[i] })
 
-	// arr = elements.nodes.map(ele => ele.data.distance || 0)
+	arr = elements.nodes.map(ele => ele.data.distance || 0)
 	res = (new ColorScaler('rgb(255, 0, 0)', 'rgb(0, 0, 255)')).fitTransform(arr)
 	elements.nodes.forEach((ele, i) => { ele.data.color = res[i] })
 
 	//  edge width
 	arr = elements.edges.map(ele => ele.data.weight || 1)
-	res = (new ValueScaler(1.0, 12.0)).fitTransform(arr)
+	res = (new ValueScaler(1.0, 6.0)).fitTransform(arr)
 	elements.edges.forEach((ele, i) => { ele.data.weight = res[i] })
 
 	var cy = cytoscape({
@@ -239,13 +239,13 @@ function drawWithLabelTexts(elements) {
 			nestingFactor: 5,
 			gravity: 80,
 			numIter: 1000,
-			initialTemp: 200,
+			initialTemp: 400,
 			coolingFactor: 0.95,
 			minTemp: 1.0
 		},
 		style: [
 	        {
-	            selector: 'node',
+	            selector: 'node', // 'node[image]',
 							style: {
 	                		"shape": 'ellipse',
 							"height": ele => ele.data('size'),
@@ -255,7 +255,11 @@ function drawWithLabelTexts(elements) {
 							"text-valign": "center",
 							"text-halign": "right",
 	                		'background-color': ele => ele.data('color') || "#555",
+							'border-width': ele => (ele.data('distance')<1 ? 2 : 0),
+							'border-color': 'black',
+							// 'background-image': ele => ele.data('image') || "",
 							content: ele => " "+ ele.data('name') || ""
+
 	       		}
 	       	},
 	       	{
