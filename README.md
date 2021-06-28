@@ -10,8 +10,8 @@ Required POST (or GET) query parameters:
 
 | parameter | description | |
 | ------ | ------ | ------ |
-| links | SPARQL query, [example](https://version.aalto.fi/gitlab/seco/hy-matrikkeli/raw/master/queries/relation_links1640.sparql), has to return values **?source** and **?target** | required |
-| nodes | SPARQL query, [example](https://version.aalto.fi/gitlab/seco/hy-matrikkeli/raw/master/queries/relation_nodes.sparql), <ID_SET> is filled automatically, has to return value **?id** | required |
+| links | SPARQL query, [example](./example_queries/Wikidata/links.sparql), has to return values **?source** and **?target** | required |
+| nodes | SPARQL query, [example](./example_queries/Wikidata/edges.sparql), <ID_SET> is filled automatically, has to return value **?id** | required |
 | endpoint | Server endpoint | required |
 | id | Resource url, if provided, returns a egocentric network | optional, default None |
 | prefixes | SPARQL prefixes, for shortening the nodes and links parameters | optional, default "" |

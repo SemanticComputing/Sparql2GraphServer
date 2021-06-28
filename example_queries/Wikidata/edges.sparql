@@ -1,0 +1,11 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/> 
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+
+SELECT DISTINCT ?id ?name (year(?birth) AS ?bryear) ?image WHERE {
+	VALUES ?id { <ID_SET> }
+	?id rdfs:label ?name .
+	FILTER (LANG(?name) = "en")
+  OPTIONAL { ?id wdt:P569 ?birth }
+OPTIONAL { ?id wdt:P18 ?image }
+}

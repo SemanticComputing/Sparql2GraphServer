@@ -1,0 +1,13 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/> 
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+
+SELECT DISTINCT ?source ?target ?label (COUNT(?link) AS ?weight) WHERE {
+	VALUES ?source { <ID> } 
+		VALUES (?rel ?label) { (wdt:P802 "Student") (wdt:P185 "Doctoral student") }
+	?source ?rel ?target
+	OPTIONAL { 
+		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+		?source ?prop ?link . ?target ?prop ?link 
+	}
+} GROUPBY ?source ?target ?label 	
