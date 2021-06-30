@@ -226,7 +226,14 @@ function drawWithLabelTexts(elements) {
         container: document.getElementById('network'),
         elements: elements,
 		layout: {
-			name: 'cose',
+			name: 'dagre', // or 'cose'
+			//	https://github.com/cytoscape/cytoscape.js-dagre
+			nodeSep: 40,
+			rankSep: 40,
+			// ranker: 'tight-tree', //'network-simplex', 'tight-tree' or 
+			// ranker: 'longest-path',
+			rankDir: 'LR', // 'TB' for top to bottom flow, 
+			nodeDimensionsIncludeLabels: true,
 			idealEdgeLength: 150,
 			nodeOverlap: 20,
 			refresh: 20,
@@ -268,11 +275,11 @@ function drawWithLabelTexts(elements) {
 	            	'width': ele => ele.data('weight') || 1,
 	                'line-color': '#999',
 	                'curve-style': 'bezier',
-	                'content': ele => ele.data('name') || "",
+	                'content': ele => ele.data('label') || "xyz",
 	        		'target-arrow-shape': 'triangle',
 	        		// 'target-arrow-color': '#999',
 	        		'color': '#555',
-	        		'font-size': '6',
+	        		'font-size': '11',
 	        		"text-valign": "top",
 	        		"text-halign": "center",
 	        		'edge-text-rotation': 'autorotate',
@@ -301,6 +308,7 @@ function update() {
 									//	for wikidata queries:
 									"User-Agent": "OpenAnything/1.0 +http://diveintopython.org/http_web_services/"}
 									};
+	// params = {}
 								
 	var srv = document.getElementById("server");
 	if (srv && srv.value) {

@@ -5,7 +5,9 @@
 <head>
 	<title>Server Network Demo</title>
 
+	<script src="https://unpkg.com/dagre@0.7.4/dist/dagre.js"></script>
 	<script src="cose demo_files/cytoscape.js"></script>
+	<script src="cose demo_files/cytoscape-dagre.js"></script>
 	<script src="demo.js"></script>
 	<link href="demo.css" rel="stylesheet" type="text/css"> 
 
@@ -37,15 +39,15 @@ PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 	</textarea>
 	<br>Links:<br>
 	<textarea id="links">
-SELECT DISTINCT ?source ?target ?name (COUNT(?link)+1 AS ?weight) WHERE {
+SELECT DISTINCT ?source ?target ?label (COUNT(?link)+1 AS ?weight) WHERE {
 	VALUES ?source { <ID> }
-		VALUES (?rel ?name) { (wdt:P802 "Student") (wdt:P185 "Doctoral student") }
+		VALUES (?rel ?label) { (wdt:P802 "Student") (wdt:P185 "Doctoral student") }
 	?source ?rel ?target
 	OPTIONAL { 
 		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
 		?source ?prop ?link . ?target ?prop ?link 
 	}
-	} GROUPBY ?source ?target ?name 	</textarea>
+	} GROUPBY ?source ?target ?label 	</textarea>
     <br>
     Nodes:<br>
 	<textarea id="nodes">
