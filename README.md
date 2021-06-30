@@ -13,10 +13,10 @@ Required POST (or GET) query parameters:
 | links | SPARQL query, [example](./example_queries/Wikidata/links.sparql), has to return values **?source** and **?target** | required |
 | nodes | SPARQL query, [example](./example_queries/Wikidata/edges.sparql), <ID_SET> is filled automatically, has to return value **?id** | required |
 | endpoint | Server endpoint | required |
-| id | Resource url, if provided, returns a egocentric network | optional, default None |
+| id | Resource url, if provided, returns an egocentric network | optional, default None |
 | prefixes | SPARQL prefixes, for shortening the nodes and links parameters | optional, default "" |
 | limit | Limit the number of links | optional, default 1000 |
-| format | Output format: 'cytoscape' or 'graphml' | default 'cytoscape'|
+| format | Output format: ['cytoscape'](http://js.cytoscape.org) or ['graphml'](http://graphml.graphdrawing.org/) | default 'cytoscape'|
 | optimize | First performs a query with optimize*limit results, and then densifies the network. | optional, default 1.0 |
 | removeMultipleLinks | show only one link between nodes | optional, default True |
 | customHttpHeaders | Headers, e.g. 'Authorization', of the query | optional, default None |
