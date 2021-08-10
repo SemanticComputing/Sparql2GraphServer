@@ -226,20 +226,27 @@ function drawWithLabelTexts(elements) {
         container: document.getElementById('network'),
         elements: elements,
 		layout: {
-			name: 'cose',
-			idealEdgeLength: 100,
+			name: 'dagre', // or 'cose'
+			//	https://github.com/cytoscape/cytoscape.js-dagre
+			nodeSep: 40,
+			rankSep: 40,
+			// ranker: 'tight-tree', //'network-simplex', 'tight-tree' or 
+			// ranker: 'longest-path',
+			rankDir: 'LR', // 'TB' for top to bottom flow, 
+			nodeDimensionsIncludeLabels: true,
+			idealEdgeLength: 150,
 			nodeOverlap: 20,
 			refresh: 20,
 			fit: true,
 			padding: 30,
 			randomize: false,
-			componentSpacing: 100,
+			componentSpacing: 150,
 			nodeRepulsion: 400000,
 			edgeElasticity: 100,
 			nestingFactor: 5,
 			gravity: 80,
 			numIter: 1000,
-			initialTemp: 200,
+			initialTemp: 400,
 			coolingFactor: 0.95,
 			minTemp: 1.0
 		},
