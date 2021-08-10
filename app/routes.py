@@ -2,7 +2,8 @@ from app    import app
 from flask  import jsonify, request, Response
 from flask_cors import CORS, cross_origin
 
-from networkbuilder import NetworkBuilder, QueryParams, LOGGER
+from networkbuilder import NetworkBuilder, LOGGER
+from queryParams import QueryParams
 nb = NetworkBuilder()
 
 from networkSignature import NetworkSignature
@@ -12,17 +13,17 @@ ns = NetworkSignature()
 @app.route('/')
 @app.route('/query', methods=['GET', 'POST'])
 def queryGraph():
-    
     if request.method == "POST":
         data = request.json
     else:
         data = request.args.to_dict(flat=False)
     
+    res = None
+
     try:
         res = nb.query(QueryParams(**data))
     
     except Exception as e:
-        # LOGGER.info("Error '{}' occured".format(e))
         return Response({'error: {}'.format(str(e))}, status=403, mimetype='application/json')
     
     response = jsonify(res)
@@ -33,7 +34,6 @@ def queryGraph():
 @app.route('/')
 @app.route('/graphml', methods=['GET', 'POST'])
 def queryGraphML():
-    
     if request.method == "POST":
         data = request.json
     else:
@@ -65,7 +65,6 @@ def querySignature():
 
 @app.after_request
 def add_cors_headers(response):
-
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type')

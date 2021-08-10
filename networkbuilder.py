@@ -35,6 +35,7 @@ class NetworkBuilder:
             LOGGER.setLevel(opts.log_level)
 
         t0 = time.time()
+        
         if opts.id:
             #   if opts.id is provided, query a egocentric network
             nodes, links = self.egocentric(opts)
@@ -56,6 +57,7 @@ class NetworkBuilder:
 
         #   if optimize>1, removed nodes causing trouble
         try:
+            #   attach calculated data to network nodes
             for ob in node_data:
                 n = ob.get('id')
                 if n:
@@ -86,15 +88,12 @@ class NetworkBuilder:
             res = nx.readwrite.json_graph.cytoscape_data(G)
             res['metrics'] = metrics
         
-        # LOGGER.debug('5: {} sec.'.format(time.time()-t0))
-
         return res
 
     def egocentric(self, opts: Dict) -> Tuple[Union[List, Set], Dict]:
         """
         Construct the network by sequential BFSearches
         """
-
         #   start node(s)
         nodes = opts.id.split(' ')
 
@@ -107,13 +106,16 @@ class NetworkBuilder:
 
             node_list = ' '.join(["<{}>".format(n) for n in nodes])
             query = opts.links.replace('<ID>', node_list)
+
+            #if not 'LIMIT' in query:
+            #    query += " LIMIT {}".format(self.__optimizedLimit(opts))
             
             links = self.makeSparqlQuery(opts.prefixes+' '+query, opts.endpoint, opts.customHttpHeaders)
-
+            LOGGER.debug("Queried {} links".format(len(links)))
             #   grow source nodes with the previous result
             n0 = len(nodes)
             nodes = self.__uniqueNodesFromLinks(links)
-            LOGGER.debug('Depth: {}, nodes {}, {} sec.'.format(i+1, len(nodes), time.time()-t0))
+            LOGGER.debug('Depth: {}, links {}, nodes {}, {:.4f} sec.'.format(i+1, len(links), len(nodes), time.time()-t0))
             
             #   make at least 2 queries to received nodes further
             if len(nodes)>=limit or len(nodes)==n0:
@@ -129,8 +131,7 @@ class NetworkBuilder:
 
     def sociocentric(self, opts: Dict) -> Tuple[Set, Dict]:
 
-        limit = int(opts.optimize*opts.limit)
-        # query = opts.prefixes +' '+ opts.links + " LIMIT {}".format(limit)
+        limit = self.__optimizedLimit(opts)
         query = "{} {} LIMIT {}".format(opts.prefixes, opts.links, limit)
         links = self.makeSparqlQuery(query, opts.endpoint, opts.customHttpHeaders)
 
@@ -141,7 +142,6 @@ class NetworkBuilder:
         LOGGER.debug("{} links found".format(len(links)))
 
         return self.__uniqueNodesFromLinks(links), links
-
 
     def generateGraph(self, nodes: Dict, links: Dict, opts: Dict) -> (nx.Graph):
 
@@ -405,17 +405,19 @@ class NetworkBuilder:
         
         return pos
 
-
+    def __optimizedLimit(self, opts: Dict) -> int:
+        return int(opts.optimize*opts.limit)
+    
     def makeSparqlQuery(self, query: str, endpoint: str, customHttpHeaders: Dict = None) -> List[Dict]:
         sparql = SPARQLWrapper(endpoint)
         sparql.setQuery(query)
         sparql.setMethod(POST)
         sparql.setReturnFormat(JSON)
-        # LOGGER.debug(query)
+        
         if customHttpHeaders:
             for k,v in customHttpHeaders.items():
                 sparql.addCustomHttpHeader(k,v)
-
+        
         try:
             results = sparql.query().convert()
         except Exception as e:
@@ -439,7 +441,7 @@ class NetworkBuilder:
 
         return data
 
-
+'''
 class QueryParams():
     def __init__(self, endpoint, nodes, links,
                 prefixes=' ',
@@ -450,15 +452,16 @@ class QueryParams():
                 log_level = 10, # "DEBUG"
                 removeMultipleLinks = True,
                 customHttpHeaders = None):
-        self.endpoint = endpoint
-        self.prefixes = prefixes
-        self.nodes = nodes
-        self.links = links
-        self.limit = int(limit)
-        self.id = id
-        self.optimize = float(optimize)
-        self.format = format
-        self.removeMultipleLinks = removeMultipleLinks
+        self.endpoint: str = endpoint
+        self.prefixes: str = prefixes
+        self.nodes: str = nodes
+        self.links: str = links
+        self.limit:int = int(limit)
+        self.id:str = id
+        self.optimize:float = float(optimize)
+        self.format:str = format
+        self.removeMultipleLinks:bool = removeMultipleLinks
         self.customHttpHeaders = customHttpHeaders
-        self.log_level = log_level
-        self.adjust_layout = False
+        self.log_level:Union(int, str) = log_level
+        self.adjust_layout:bool = False
+'''
