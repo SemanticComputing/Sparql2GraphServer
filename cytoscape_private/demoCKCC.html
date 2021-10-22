@@ -5,24 +5,24 @@
 <head>
 	<title>Server Network Demo</title>
 
-	<script src="cose demo_files/cytoscape.js"></script>
-	<script src="demo.js"></script>
-	<link href="demo.css" rel="stylesheet" type="text/css">
+	<script src="../cytoscape/cose demo_files/cytoscape.js"></script>
+	<script src="../cytoscape/demo.js"></script>
+	<link href="../cytoscape/demo.css" rel="stylesheet" type="text/css">
 
 </head>
 
 <body onload="update()">
 <div class="split left">
 	<div>Endpoint:<br>
-	<input type="text" id="endpoint" value="http://ldf.fi/emlo/sparql"></input>
+	<input type="text" id="endpoint" value="http://ldf.fi/ckcc/sparql"></input>
 	<br>ID:<br>
-	<input type="text" id="id" value="http://emlo.bodleian.ox.ac.uk/id/32e87fb3-2b0d-4662-8f3e-efeea2a8eb54"></input>
+	<input type="text" id="id" value="http://ldf.fi/ckcc/actors/p14583"></input>
 	<br>Limit:<br>
 	<input type="text" id="limit" value="75"></input>
 	<br>Optimize:<br>
 	<input type="text" id="optimize" value="1.5"></input>
 	<br>Authorization:<br>
-	<input type="text" id="Authorization" value="Basic c2Vjbzpsb2dvczAz"></input>
+	<input type="text" id="Authorization" value="Basic ???"></input>
 	<br>Server:<br>
 	<select type="text" id="server" value="https://sparql-network.demo.seco.cs.aalto.fi">
 		<option value="http://127.0.0.1:5000">Localhost: http://127.0.0.1:5000</option>
@@ -31,15 +31,19 @@
 	<br>
 	<button type="button" onclick="update()">Update</button>
 	<button type="button" onclick="updateGraphml()">Graphml</button>
+	<button type="button" onclick="updateSignature()">Signature</button>
 	<br>
 	<br>Prefixes:<br>
-	<textarea id="prefixes">PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/> 
+	<textarea id="prefixes">PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX eschema: <http://emlo.bodleian.ox.ac.uk/schema#>
+PREFIX emlo_id: <http://emlo.bodleian.ox.ac.uk/id/>
+PREFIX actors: <http://ldf.fi/ckcc/actors/>
+PREFIX letters: <http://ldf.fi/ckcc/letters/>
+PREFIX places: <http://ldf.fi/ckcc/places/>
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
-PREFIX mmm-schema: <http://ldf.fi/schema/mmm/>
 PREFIX spatial: <http://jena.apache.org/spatial#>
 PREFIX sch: <http://schema.org/>
 PREFIX sdmx-code: <http://purl.org/linked-data/sdmx/2009/code#>
@@ -49,47 +53,47 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX text: <http://jena.apache.org/text#>
 PREFIX wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX ckccs: <http://ldf.fi/schema/ckcc/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#> 
 	</textarea>
 	<br>Links:<br>
 	<textarea id="links">
-SELECT DISTINCT ?source ?target (1 AS ?weight)
-	#	(COUNT(DISTINCT ?letter) AS ?weight)
-WHERE 
-{
+SELECT DISTINCT ?source ?target 
+?weight 
+(STR(?weight) AS ?prefLabel)
+WHERE {
 	VALUES ?id { <ID> }
 	{
-	?id eschema:cofk_union_relationship_type-created ?letter .
-	?letter a eschema:Letter ;
-		eschema:cofk_union_relationship_type-was_addressed_to ?target .
-	BIND(?id AS ?source)
+		?tie ckccs:actor1 ?id ;
+		ckccs:actor2 ?target
+		BIND(?id AS ?source)
 	} UNION {
-	?letter eschema:cofk_union_relationship_type-was_addressed_to ?id ;
-				a eschema:Letter .
-	?source eschema:cofk_union_relationship_type-created ?letter ;
-	BIND(?id AS ?target)
+		?tie ckccs:actor1 ?source ; 
+		ckccs:actor2 ?id
+		BIND(?id AS ?target)
 	}
+	?tie ckccs:num_letters ?weight .
 
-	#	filter 'unknown' etc entries
 	?source skos:prefLabel ?source__label . 
 	FILTER (!REGEX(?source__label, '(unknown|no_recipient_given)', 'i'))
 	?target skos:prefLabel ?target__label . 
 	FILTER (!REGEX(?target__label, '(unknown|no_recipient_given)', 'i'))
 
-	#	no self links
 	FILTER (?source!=?target)
-
-} GROUP BY ?source ?target
+} 
 	</textarea>
 	<br>
 	Nodes:<br>
 	<textarea id="nodes">
-SELECT DISTINCT ?id (?prefLabel AS ?name) ?class 
+SELECT DISTINCT ?id (?prefLabel AS ?name) ?class ?href
 WHERE {
 	VALUES ?class { crm:E21_Person crm:E74_Group }
 	VALUES ?id { <ID_SET> }
 	?id a ?class ;
-	skos:prefLabel ?prefLabel .
-} </textarea>
+	skos:prefLabel ?_label .
+	BIND(REPLACE(?_label, ',[^,A-ZÜÅÄÖ]+$', '')AS ?prefLabel)
+	BIND(CONCAT("../", REPLACE(STR(?id), "^.*\\\\/(.+)", "$1"),"/letterNetwork") AS ?href)
+}</textarea>
 	</div>
 	<div class="split right">
 	<div id="info"></div>

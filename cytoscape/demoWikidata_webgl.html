@@ -1,0 +1,74 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8">
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="https://unpkg.com/3d-force-graph"></script>
+	<!-- <script src="https://unpkg.com/neo4j-driver"></script> -->
+	
+	<script src="demo_webgl.js"></script>
+	<link href="demo_webgl.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body onload="update()" width="100%">
+<div class="left">
+	<div>Endpoint:<br>
+	<input type="text" id="endpoint" value="https://query.wikidata.org/sparql"></input>
+	<br>ID:<br>
+	<input type="text" id="id" value="http://www.wikidata.org/entity/Q9047"></input>
+	<br>Limit:<br>
+	<input type="text" id="limit" value="200"></input>
+	<br>Optimize:<br>
+	<input type="text" id="optimize" value="1.0"></input>
+	<br>Authorization:<br>
+	<input type="text" id="Authorization" value=" "></input>
+	<br>Server:<br>
+	<select type="text" id="server" value="https://sparql-network.demo.seco.cs.aalto.fi">
+		<option value="http://127.0.0.1:5000">Localhost: http://127.0.0.1:5000</option>
+		<option value="https://sparql-network.demo.seco.cs.aalto.fi">Online server: https://sparql-network.demo.seco.cs.aalto.fi</option>
+	</select>
+	<br>
+	<button type="button" onclick="update()">Update</button>
+	<button type="button" onclick="updateGraphml()">Graphml</button>
+	<button type="button" onclick="updateSignature()">Signature</button>
+	<br>
+	<br>Prefixes:<br>
+	<textarea id="prefixes">PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+	</textarea>
+	<br>Links:<br>
+	<textarea id="links">SELECT DISTINCT ?source ?target ?label (50*COUNT(?link)+10 AS ?weight) WHERE {
+			VALUES ?source { <ID> }
+				VALUES (?rel ?label) { (wdt:P802 "Student") (wdt:P185 "Doctoral student") }
+			?source ?rel ?target
+			OPTIONAL { 
+				VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+				?source ?prop ?link . ?target ?prop ?link 
+			}
+			} GROUPBY ?source ?target ?label 
+	</textarea>
+	<br>
+	Nodes:<br>
+	<textarea id="nodes">SELECT DISTINCT ?id ?name (50*COUNT(?link)+10 AS ?size) 
+WHERE {
+	VALUES ?id { <ID_SET> }
+	?id rdfs:label ?name .
+	FILTER (LANG(?name) = "en").
+	OPTIONAL { 
+		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+		?id ?prop ?link
+	}
+} GROUP BY ?id ?name </textarea>
+	</div>
+	<div class="right">
+		<div id="info"></div>
+		<div id="network"></div>
+	</div>
+</body>
+
+</html>
