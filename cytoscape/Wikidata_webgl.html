@@ -8,14 +8,20 @@
 	<script src="https://unpkg.com/3d-force-graph"></script>
 	<!-- <script src="https://unpkg.com/neo4j-driver"></script> -->
 	
-	<script src="demo_webgl.js"></script>
-	<link href="demo_webgl.css" rel="stylesheet" type="text/css">
+	<script src="js/demo_webgl.js"></script>
+	<link href="css/demo_webgl.css" rel="stylesheet" type="text/css">
 
 </head>
 
 <body onload="update()" width="100%">
+<div class="right">
+	<div id="info"></div>
+	<div id="network"></div>
+</div>
 <div class="left">
-	<div>Endpoint:<br>
+	<div>
+		<h2>Demo: Sparql2GraphServer</h2>
+		Endpoint:<br>
 	<input type="text" id="endpoint" value="https://query.wikidata.org/sparql"></input>
 	<br>ID:<br>
 	<input type="text" id="id" value="http://www.wikidata.org/entity/Q9047"></input>
@@ -23,8 +29,6 @@
 	<input type="text" id="limit" value="200"></input>
 	<br>Optimize:<br>
 	<input type="text" id="optimize" value="1.0"></input>
-	<br>Authorization:<br>
-	<input type="text" id="Authorization" value=" "></input>
 	<br>Server:<br>
 	<select type="text" id="server" value="https://sparql-network.demo.seco.cs.aalto.fi">
 		<option value="http://127.0.0.1:5000">Localhost: http://127.0.0.1:5000</option>
@@ -64,10 +68,6 @@ WHERE {
 		?id ?prop ?link
 	}
 } GROUP BY ?id ?name </textarea>
-	</div>
-	<div class="right">
-		<div id="info"></div>
-		<div id="network"></div>
 	</div>
 </body>
 

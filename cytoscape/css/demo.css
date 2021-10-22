@@ -11,12 +11,19 @@
 /* Control the left side */
 .left {
   left: 0;
+  width: 38%;
   background-color: #BBB;
+}
+
+/* Control the left side */
+.left-input {
+  padding-left: 15px;
 }
 
 /* Control the right side */
 .right {
   right: 0;
+  width: 62%;
   padding-left: 10px;
 }
 
@@ -31,15 +38,14 @@
     border: 1px solid lightgray;
 }
 
-
 textarea {
 	font: 12pt arial;
-    width: 95%;
-    height: 130px;
+  width: 95%;
+  height: 130px;
 }
 
 input {
 	font: 12pt arial;
-    width: 95%;
-    height: 30px;
+  width: 95%;
+  height: 30px;
 }

@@ -6,14 +6,16 @@
 	<title>Server Network Demo</title>
 
 	<script src="cose demo_files/cytoscape.js"></script>
-	<script src="demo_nolayout.js"></script>
-	<link href="demo.css" rel="stylesheet" type="text/css">
+	<script src="js/demo.js"></script>
+	<link href="css/demo.css" rel="stylesheet" type="text/css">
 
 </head>
 
 <body onload="update()">
 <div class="split left">
-	<div>Endpoint:<br>
+	<div class="left-input">
+		<h2>Demo: Sparql2GraphServer</h2>
+		Endpoint:<br>
 	<input type="text" id="endpoint" value="http://ldf.fi/yoma/sparql"></input>
 	<br>ID:<br>
 	<input type="text" id="id" value="http://ldf.fi/yoma/people/p12346"></input>
@@ -21,8 +23,6 @@
 	<input type="text" id="limit" value="75"></input>
 	<br>Optimize:<br>
 	<input type="text" id="optimize" value="1.0"></input>
-	<br>Authorization:<br>
-	<input type="text" id="Authorization" value=""></input>
 	<br>Server:<br>
 	<select type="text" id="server" value="http://127.0.0.1:5000">
 		<option value="http://127.0.0.1:5000">Local http://127.0.0.1:5000</option>
@@ -52,19 +52,19 @@ PREFIX : <http://ldf.fi/schema/yoma/>
 	</textarea>
 	<br>Links:<br>
 	<textarea id="links">
-SELECT DISTINCT ?source ?target (?prefLabel AS ?name) ?rel (1 as ?weight)
+SELECT DISTINCT ?source ?target (?prefLabel AS ?label) ?rel (1 as ?weight)
 WHERE {
 	VALUES ?id { <ID> }
 	VALUES ?rel { rels:f3 rels:f4 rels:f5 rels:f6 rels:f7 rels:f11 rels:f12 }
 	{
-		?id bioc:has_family_relation [ a ?rel ; a/rels:level ?level ; bioc:inheres_in ?target ] .
-		OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='fi') }
+		?id bioc:has_family_relation [ a ?rel ; bioc:inheres_in ?target ] .
+		OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='en') }
 		BIND(?id AS ?source)
 	}
 	UNION
 	{
-		?source bioc:has_family_relation [ a ?rel ; a/rels:level ?level ; bioc:inheres_in ?id ] .
-		OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='fi') }
+		?source bioc:has_family_relation [ a ?rel ; bioc:inheres_in ?id ] .
+		OPTIONAL { ?rel skos:prefLabel ?prefLabel . FILTER(LANG(?prefLabel)='en') }
 		BIND(?id AS ?target)
 	}
 }

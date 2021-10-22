@@ -1,19 +1,23 @@
 <!doctype html>
 
 <html>
-	<meta charset="UTF-8">
+	<meta charset="UTF-8"> 
 <head>
 	<title>Server Network Demo</title>
 
+	<script src="https://unpkg.com/dagre@0.7.4/dist/dagre.js"></script>
 	<script src="cose demo_files/cytoscape.js"></script>
-	<script src="demo.js"></script>
-	<link href="demo.css" rel="stylesheet" type="text/css">
+	<script src="cose demo_files/cytoscape-dagre.js"></script>
+	<script src="js/demo_dagre.js"></script>
+	<link href="css/demo.css" rel="stylesheet" type="text/css"> 
 
 </head>
 
 <body onload="update()">
 <div class="split left">
-	<div>Endpoint:<br>
+	<div class="left-input">
+		<h2>Demo: Sparql2GraphServer</h2>
+		Endpoint:<br>
 	<input type="text" id="endpoint" value="https://query.wikidata.org/sparql"></input>
 	<br>ID:<br>
 	<input type="text" id="id" value="http://www.wikidata.org/entity/Q9047"></input>
@@ -63,9 +67,10 @@ SELECT DISTINCT ?id ?name ?image (COUNT(?link)+1 AS ?size) WHERE {
 	
 	</div>
 	<div class="split right">
-	<div id="info"></div>
-	<div id="network"></div>
+		<div id="info"></div>
+		<div id="network"></div>
 	</div>
+</div>
 </body>
 
 </html>

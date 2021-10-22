@@ -6,12 +6,16 @@
 	<title>Server Network Demo</title>
 
 	<script src="../cytoscape/cose demo_files/cytoscape.js"></script>
-	<script src="../cytoscape/demo.js"></script>
-	<link href="../cytoscape/demo.css" rel="stylesheet" type="text/css">
-
+	<script src="../cytoscape/js/demo_webgl.js"></script>
+	<link href="../cytoscape/css/demo_webgl.css" rel="stylesheet" type="text/css">
 </head>
 
 <body onload="update()" width="100%">
+
+<div class="right">
+	<div id="info"></div>
+	<div id="network"></div>
+</div>
 <div class="left">
 	<div>Endpoint:<br>
 	<input type="text" id="endpoint" value="http://ldf.fi/ckcc/sparql"></input>
@@ -78,10 +82,6 @@ WHERE {
 	BIND(REPLACE(?_label, ',[^,A-ZÜÅÄÖ]+$', '')AS ?prefLabel)
 	BIND(CONCAT("../", REPLACE(STR(?id), "^.*\\\\/(.+)", "$1"),"/letterNetwork") AS ?href)
 }</textarea>
-	</div>
-	<div class="right">
-		<div id="info"></div>
-		<div id="network"></div>
 	</div>
 </body>
 

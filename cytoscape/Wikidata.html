@@ -1,0 +1,74 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8">
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="cose demo_files/cytoscape.js"></script>
+	<script src="js/demo.js"></script>
+	<link href="css/demo.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body onload="update()">
+	<div class="split left">
+		<div class="left-input">
+			<h2>Demo: Sparql2GraphServer</h2>
+			Endpoint:<br>
+			<input type="text" id="endpoint" value="https://query.wikidata.org/sparql"></input>
+			<br>ID:<br>
+			<input type="text" id="id" value="http://www.wikidata.org/entity/Q9047"></input>
+			<br>Limit:<br>
+			<input type="text" id="limit" value="100"></input>
+			<br>Optimize:<br>
+			<input type="text" id="optimize" value="1.5"></input>
+			<br>Server:<br>
+			<select type="text" id="server" value="http://127.0.0.1:5000">
+				<option value="http://127.0.0.1:5000">Local http://127.0.0.1:5000</option>
+				<option value="https://sparql-network.demo.seco.cs.aalto.fi">Online</option>
+			</select>
+			<button type="button" onclick="update()">Update</button>
+			<button type="button" onclick="updateGraphml()">Graphml</button>
+			<br>Prefixes:<br>
+			<textarea id="prefixes">
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+			</textarea>
+			<br>Links:<br>
+			<textarea id="links">
+SELECT DISTINCT ?source ?target ?label (COUNT(?link)+1 AS ?weight) WHERE {
+	VALUES ?source { <ID> }
+		VALUES (?rel ?label) { (wdt:P802 "Student") (wdt:P185 "Doctoral student") }
+	?source ?rel ?target
+	OPTIONAL { 
+		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+		?source ?prop ?link . ?target ?prop ?link 
+	}
+} GROUPBY ?source ?target ?label </textarea>
+			<br>
+			Nodes:<br>
+			<textarea id="nodes">
+SELECT DISTINCT ?id ?name ?image (COUNT(?link)+1 AS ?size) WHERE {
+	VALUES ?id { <ID_SET> }
+	?id rdfs:label ?name .
+	FILTER (LANG(?name) = "en").
+	OPTIONAL { ?id wdt:P18 ?image }
+	OPTIONAL { 
+		VALUES ?prop { wdt:P101 wdt:P463 wdt:P106 }
+		?id ?prop ?link
+	}
+} GROUP BY ?id ?name ?image </textarea>
+		</div>
+		<div class="split right">
+			<div id="info"></div>
+			<div id="network"></div>
+		</div>
+	</div>
+</body>
+
+</html>
+
+

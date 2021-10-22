@@ -268,7 +268,7 @@ function drawWithLabelTexts(elements) {
 	            	'width': ele => ele.data('weight') || 1,
 	                'line-color': '#999',
 	                'curve-style': 'bezier',
-	                'content': ele => ele.data('label') || "xyz",
+	                'content': ele => ele.data('label') || "-",
 	        		'target-arrow-shape': 'triangle',
 	        		// 'target-arrow-color': '#999',
 	        		'color': '#555',
