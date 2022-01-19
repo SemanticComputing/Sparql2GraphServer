@@ -3,6 +3,7 @@ Server code for performing a SPARQL query for social network, and output it in a
 
 start localhost http://127.0.0.1:5000/ with:
 ```sh
+source env/bin/activate
 export FLASK_APP=app/routes.py
 flask run
 ```
