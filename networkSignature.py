@@ -6,9 +6,7 @@ Created on 18.11.2020
 
 import logging
 
-from networkbuilder import LOGGER
-from letter_analytics import ego, analytics
-import networkfunctions as fnx
+from letter_analytics import ego
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 
 LOGGER  = logging.getLogger(__name__)
@@ -34,7 +32,6 @@ class NetworkSignature:
         sparql.setQuery(q)
             
         sparql.setReturnFormat(JSON)
-        sparql.addCustomHttpHeader("Authorization", "Basic c2Vjbzpsb2dvczAz")
         results = sparql.query().convert()
         ea = ego.EgoAnalytics(opts.id, query=results)
         ea.social_signature(bin_type='linear', bin_n=5, max_rank=max_rank)
