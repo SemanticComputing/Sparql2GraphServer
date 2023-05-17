@@ -1,0 +1,108 @@
+<!doctype html>
+
+<html>
+	<meta charset="UTF-8">
+<head>
+	<title>Server Network Demo</title>
+
+	<script src="../cytoscape/cose demo_files/cytoscape.js"></script>
+	<script src="../cytoscape/js/demo.js"></script>
+	<link href="../cytoscape/css/demo.css" rel="stylesheet" type="text/css">
+
+</head>
+
+<body onload="update()">
+<div class="split left">
+	<div class="left-input">Endpoint:<br>
+	<input type="text" id="endpoint" value="http://ldf.fi/coco/sparql"></input>
+	<br>ID:<br>
+	<input type="text" id="id" value="http://ldf.fi/coco/actors/p1065198913499052634"></input>
+	<br>Limit:<br>
+	<input type="text" id="limit" value="100"></input>
+	<br>Optimize:<br>
+	<input type="text" id="optimize" value="1.5"></input>
+	<br>Authorization:<br>
+	<input type="text" id="Authorization" value="Basic ???"></input>
+	<br>Server:<br>
+	<select type="text" id="server" value="https://sparql-network.demo.seco.cs.aalto.fi">
+		<option value="http://127.0.0.1:5000">Localhost: http://127.0.0.1:5000</option>
+		<option value="https://sparql-network.demo.seco.cs.aalto.fi">Online server: https://sparql-network.demo.seco.cs.aalto.fi</option>
+	</select>
+	<br>
+	<button type="button" onclick="update()">Update</button>
+	<button type="button" onclick="updateGraphml()">Graphml</button>
+	<button type="button" onclick="updateSignature()">Signature</button>
+	<br>
+	<br>Prefixes:<br>
+	<textarea id="prefixes">PREFIX bioc: <http://ldf.fi/schema/bioc/>
+	PREFIX crm: <http://www.cidoc-crm.org/cidoc-crm/>
+	PREFIX dct: <http://purl.org/dc/terms/>
+	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+	PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+	PREFIX owl: <http://www.w3.org/2002/07/owl#>
+	PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	PREFIX sch: <http://schema.org/>
+	PREFIX spatial: <http://jena.apache.org/spatial#>
+	PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+	PREFIX text: <http://jena.apache.org/text#>
+	PREFIX wgs84: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+	PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+	
+	PReFiX actors: <http://ldf.fi/coco/actors/> 
+	PrEFIX letters: <http://ldf.fi/coco/letters/> 
+	pREFIX cocos: <http://ldf.fi/schema/coco/> 
+	PREFIx places: <http://ldf.fi/coco/places/>  
+	</textarea>
+	<br>Links:<br>
+	<textarea id="links">
+		SELECT DISTINCT ?source ?target
+		?weight 
+		(STR(?weight) AS ?label)
+	  WHERE {
+		VALUES ?id { <ID> }
+		{
+		  ?tie cocos:actor1 ?id ;
+			cocos:actor2 ?target
+		  BIND(?id AS ?source)
+		} UNION {
+		  ?tie cocos:actor1 ?source ; 
+		  cocos:actor2 ?id
+		  BIND(?id AS ?target)
+		}
+		?tie cocos:num_letters ?weight .
+		FILTER(?weight>9)
+	  
+		?source skos:prefLabel ?source__label . 
+		?target skos:prefLabel ?target__label . 
+	  
+		# no self links
+		FILTER (?source!=?target)
+	  } 
+	</textarea>
+	<br>
+	Nodes:<br>
+<textarea id="nodes">
+SELECT DISTINCT ?id (?_label AS ?name) ?class ?href
+	(COALESCE(?_out, 0)+COALESCE(?_in, 0) AS ?numLetters)
+	?gender 
+WHERE {
+	VALUES ?class { crm:E21_Person crm:E39_Actor crm:E74_Group cocos:Family }
+	VALUES ?id { <ID_SET> }
+	?id a ?class ;
+		skos:prefLabel ?_label .
+	OPTIONAL { ?id cocos:out_degree ?_out }
+	OPTIONAL { ?id cocos:in_degree ?_in }
+			OPTIONAL { ?id bioc:has_gender/skos:prefLabel ?gender }
+
+	BIND(CONCAT("../../page/", REPLACE(STR(?id), "^.*\\\\/(.+)", "$1"),"/letter-network") AS ?href)
+}
+}</textarea>
+	</div>
+	<div class="split right">
+	<div id="info"></div>
+	<div id="network"></div>
+	</div>
+</body>
+
+</html>
