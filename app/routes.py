@@ -59,7 +59,12 @@ def querySignature():
         data = request.json
     else:
         data = request.args.to_dict(flat=False)
-    res = ns.query(QueryParams(**data))
+
+    try:
+        res = ns.query(QueryParams(**data))
+    except Exception as e:
+        return Response({'error: {}'.format(str(e))}, status=403, mimetype='text/xml')
+    
     return jsonify(res)
 
 

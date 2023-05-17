@@ -29,6 +29,11 @@ class NetworkSignature:
         
         q = self.ego_query(opts)
         sparql = SPARQLWrapper(opts.endpoint)
+
+        if opts.customHttpHeaders:
+            for k,v in opts.customHttpHeaders.items():
+                sparql.addCustomHttpHeader(k,v)
+        
         sparql.setQuery(q)
             
         sparql.setReturnFormat(JSON)
