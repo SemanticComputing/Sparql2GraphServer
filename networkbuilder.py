@@ -82,7 +82,7 @@ class NetworkBuilder:
 
         if opts.format == NetworkBuilder.GRAPHML:
             # Choose graphml as the return format
-            res = '\n'.join(nx.generate_graphml(G, prettyprint=True))
+            res = '\n'.join(nx.generate_graphml(G, prettyprint=True, named_key_ids=True))
         else:
             # JSON for cytoscape as the return format
             res = nx.readwrite.json_graph.cytoscape_data(G)
