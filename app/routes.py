@@ -30,6 +30,25 @@ def queryGraph():
     
     return response
 
+@app.route('/')
+@app.route('/query_ego', methods=['GET', 'POST'])
+def queryGraphEgo():
+    if request.method == "POST":
+        data = request.json
+    else:
+        data = request.args.to_dict(flat=False)
+    
+    res = None
+
+    try:
+        res = nb.query_ego(QueryParams(**data))
+    
+    except Exception as e:
+        return Response({'error: {}'.format(str(e))}, status=403, mimetype='application/json')
+    
+    response = jsonify(res)
+    
+    return response
 
 @app.route('/')
 @app.route('/graphml', methods=['GET', 'POST'])

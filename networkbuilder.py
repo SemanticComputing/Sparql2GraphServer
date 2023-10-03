@@ -4,6 +4,7 @@ Created on 5.4.2019, modified 4.3.2020, 18.11.2020, 2.1.2021
 @author: petrileskinen
 '''
 
+from collections import defaultdict
 import logging
 import multiprocessing
 import networkx as nx
@@ -48,7 +49,7 @@ class NetworkBuilder:
         # LOGGER.debug('2: {} sec.'.format(time.time()-t0))
 
         # self.__debugGraph(G)
-        self.densifyGraph(G, opts.limit)
+        self.densifyGraph(G, opts)
         # LOGGER.debug('3: {} sec.'.format(time.time()-t0))
 
         # self.__debugGraph(G)
@@ -90,6 +91,65 @@ class NetworkBuilder:
         
         return res
 
+    def query_ego(self, opts: Dict) -> Dict:
+        '''Test for CoCo egographs.'''
+        if opts.log_level:
+            LOGGER.setLevel(opts.log_level)
+
+        t0 = time.time()
+        
+        if opts.id:
+            #   if opts.id is provided, query a egocentric network
+            nodes, links = self.egocentricCoCo(opts)
+            LOGGER.debug(opts.id)
+        else:
+            #   otherwise a sampled, sociocentric network
+            nodes, links = self.sociocentric(opts)
+        # LOGGER.debug('1: {} sec.'.format(time.time()-t0))
+
+        G = self.generateGraph([{'id': n} for n in nodes], links, opts)
+        # LOGGER.debug('2: {} sec.'.format(time.time()-t0))
+
+        # self.__debugGraph(G)
+        node_data, metrics = self.getGraphDetails(G, opts)
+        # LOGGER.debug('4: {} sec.'.format(time.time()-t0))
+
+        #   if optimize>1, removed nodes causing trouble
+        try:
+            #   attach calculated data to network nodes
+            for ob in node_data:
+                n = ob.get('id')
+                if n:
+                    for k,v in ob.items():
+                        if k!='id':
+                            G.nodes[n][k] = v
+                else:
+                    LOGGER.debug("No 'id' found for {}".format(ob))
+        except Exception as e:
+            LOGGER.error("{} occured".format(e))
+            LOGGER.error("{}".format(node_data))
+            raise e
+        
+        '''
+        Check if coordinates need adjusting based on ?_x or ?_y result value
+        '''
+        for _,v in G.nodes(data=True):
+            if ('_x' in v.keys() or '_y' in v.keys()):
+                LOGGER.debug("self.adjustPositions")
+                self.adjustPositions(G)
+                break
+
+        if opts.format == NetworkBuilder.GRAPHML:
+            # Choose graphml as the return format
+            res = '\n'.join(nx.generate_graphml(G, prettyprint=True, named_key_ids=True))
+        else:
+            # JSON for cytoscape as the return format
+            res = nx.readwrite.json_graph.cytoscape_data(G)
+            res['metrics'] = metrics
+        
+        return res
+    
+
     def egocentric(self, opts: Dict) -> Tuple[Union[List, Set], Dict]:
         """
         Construct the network by sequential BFSearches
@@ -128,6 +188,48 @@ class NetworkBuilder:
 
         return nodes, links
 
+    def egocentricCoCo(self, opts: Dict) -> Tuple[Union[List, Set], Dict]:
+        nodes = opts.id.split(' ')
+
+        limit = int(opts.optimize*opts.limit)
+        LOGGER.debug("Limit set to {}".format(limit))
+
+        t0 = time.time()
+        # no more than DEPTH_MAX steps:
+    
+        node_list = ' '.join(["<{}>".format(n) for n in nodes])
+        query = opts.links.replace('<ID>', node_list) + f' LIMIT {limit}'
+        
+        res = self.makeSparqlQuery(opts.prefixes+' '+query, opts.endpoint, opts.customHttpHeaders)
+        LOGGER.debug("Queried {} links".format(len(res)))
+
+        N = opts.limit or 500
+        edges = []
+
+        filter_source = lambda ob: ob.get('source') in nodes and (not ob.get('target') in nodes)
+        filter_target = lambda ob: ob.get('target') in nodes and (not ob.get('source') in nodes)
+
+        for _ in range(1,N):
+            dc = defaultdict(int)
+
+            for ob in filter(filter_target, res):
+                dc[ob.get('source')] += ob.get('weight')
+
+            for ob in filter(filter_source, res):
+                dc[ob.get('target')] += ob.get('weight')
+            # new_nodes = list((((ob.get('source'), ob.get('weight')) for ob in res if ob.get('target') in nodes)))
+
+            if dc:
+                new_node, _ = max(dc.items(), key = lambda x:x[1])
+                nodes.append(new_node)
+                for ob in res:
+                    if ob.get('source') in nodes and ob.get('target') in nodes and ob not in edges:
+                        edges.append(ob)
+            else:
+                break
+
+        # print(f'Added {new_node}, nodes {len(nodes)}, edges {len(edges)}, density {len(edges)/len(nodes)}')
+        return nodes, edges
 
     def sociocentric(self, opts: Dict) -> Tuple[Set, Dict]:
 
@@ -227,7 +329,7 @@ class NetworkBuilder:
 
 
 
-    def densifyGraph(self, G: (nx.Graph), limit: int) -> None:
+    def densifyGraph(self, G: (nx.Graph), opts: Dict) -> None:
         '''
         Densify the graph by removing
         - small connected components
@@ -238,7 +340,7 @@ class NetworkBuilder:
                      key=len, reverse=True)
         count = 0
         for c in wcc:
-            if count<limit:
+            if count<opts.limit:
                 count += len(c)
             else:
                 G.remove_nodes_from(c)
@@ -247,14 +349,17 @@ class NetworkBuilder:
         n = G.number_of_nodes()
         iters = 0
         
-        while n > limit and iters<20:
+        while n > opts.limit and iters<100:
             # Remove low degree nodes in a couple of batches:
             arr = sorted([(k,v) for k,v in G.degree(weight=None)], key = lambda x: x[1])
             
-            m = min(n-limit, limit)
-            arr = [k for k,_ in arr[:m]]
+            m = min(n-opts.limit, opts.limit)
+            arr = [k for k,_ in arr[:m] if k != opts.id]
+            if opts.id and opts.id in arr:
+                LOGGER.debug(f'Trying to remove ego node')
             
-            G.remove_nodes_from(arr)
+            if arr:
+                G.remove_nodes_from(arr)
             n = G.number_of_nodes()
             iters += 1
             LOGGER.debug("Currently {} nodes at step {}.".format(n, iters))
