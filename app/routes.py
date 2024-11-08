@@ -86,6 +86,9 @@ def querySignature():
     
     return jsonify(res)
 
+@app.route('/health')
+def health_check():
+    return 'OK', 200
 
 @app.after_request
 def add_cors_headers(response):
